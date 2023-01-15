@@ -19,3 +19,11 @@ resources ：
     image : 图片资源png、jpg
     video ： 视频资源mp4
     application.yaml ：数据配置文件，例如mysql配置，redis配置
+
+导入依赖(失败的话可以尝试下面三个命令)：
+
+go mod init first
+
+go get -u github.com/gin-gonic/gin
+
+go get -u github.com/jinzhu/gorm
