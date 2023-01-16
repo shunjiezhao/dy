@@ -12,7 +12,7 @@
 # user_favourite_video:
 #     (uuid, video_id, is_like): 查询喜欢列表的时候使用
 # comment_info:
-#       video_id: 查看视频的所有评论.
+#       (video_id): 查看视频的所有评论.
 
 create database dy;
 CREATE TABLE if not exists dy.user_info
@@ -55,7 +55,7 @@ CREATE TABLE if not exists dy.user_favourite_video
     DEFAULT charset = utf8mb4;
 
 
-# `视频信息表`
+# 视频信息表
 CREATE TABLE if not exists dy.video_info
 (
     video_id        int          NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE if not exists dy.video_info
     DEFAULT charset = utf8mb4;
 
 
-#`评论信息表`
+# 评论信息表
 CREATE TABLE if not exists dy.comment_info
 (
     comment_id  int      NOT NULL COMMENT '评论id,删除的时候使用',
