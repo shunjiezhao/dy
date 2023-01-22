@@ -85,6 +85,3 @@ CREATE TABLE if not exists dy.comment_info
     KEY (video_id) COMMENT '查询视频评论列表使用'
     ) ENGINE = InnoDB
     DEFAULT charset = utf8mb4;
-
-
-
