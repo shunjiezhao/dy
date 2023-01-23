@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	userPb "first/kitex_gen/user"
+	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
 	"first/service/api/rpc"
@@ -59,7 +60,6 @@ func Login() func(ctx context.Context, c *app.RequestContext) {
 			c.Abort()
 			return
 		}
-		c.Set("uuid", Uuid)
+		c.Set(constants.IdentityKey, Uuid)
 	}
-
 }

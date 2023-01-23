@@ -31,7 +31,9 @@ cleanidl:
 	@$(foreach name,$(idlPbFile), $(call mvGenFile,$(basename $(notdir $(name)))))
 
 
+.ONESHELL:
 run:
+	go install github.com/golang/mock/mockgen@v1.6.0
 	docker compose up
 	go run ./service/api/main.go
 	go run ./service/user/main.go

@@ -6,7 +6,7 @@ const (
 
 	// jwt
 	SecretKey      = "secret key"
-	IdentityKey    = "id"
+	IdentityKey    = "user_id"
 	PublicKeyFile  = "E:\\DY2023\\pkg\\constants\\pub.key"
 	PrivateKeyFile = "E:\\DY2023\\pkg\\constants\\private.key"
 

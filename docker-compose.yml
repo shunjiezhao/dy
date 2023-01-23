@@ -3,7 +3,7 @@ networks:
   web-network:
 
 services:
-  docker-etcd:
+  etcd:
     hostname: etcd
     image: bitnami/etcd:3.5.5
     environment:
@@ -15,10 +15,20 @@ services:
     networks:
       - web-network
 
-  docker-etcdkeeper:
+  etcdkeeper:
     hostname: etcdkeeper
     image: evildecay/etcdkeeper:v0.7.6
     ports:
       - "8099:8080"
     networks:
       - web-network
+#  TODO: 完成 mysql 的书写
+#  mysql:
+#    hostname: zsj
+#    image: mysql
+#    ports:
+#      - "3306:3306"
+#    environment:
+#      MYSQL_ROOT_PASSWORD: "az123."
+#      MYSQL_USER: 'zsj'
+#      MYSQL_PASS: 'az123.'

@@ -35,7 +35,7 @@ func main() {
 		PubKeyFile:       constants.PublicKeyFile,
 		PrivKeyFile:      constants.PrivateKeyFile,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*int64); ok {
+			if v, ok := data.(int64); ok {
 				return jwt.MapClaims{
 					constants.IdentityKey: v,
 				}
@@ -45,7 +45,7 @@ func main() {
 		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
 			c.JSON(http.StatusOK, map[string]interface{}{
 				"code":    http.StatusOK,
-				"user_id": c.MustGet("uuid").(int64), // Authenticator 会先处理没有 uuid 的情况
+				"user_id": c.MustGet(constants.IdentityKey).(int64), // Authenticator 会先处理没有 uuid 的情况
 				"token":   token,
 				"expire":  expire.Format(time.RFC3339),
 			})
@@ -57,7 +57,7 @@ func main() {
 			})
 		},
 		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
-			value, exists := c.Get("uuid")
+			value, exists := c.Get(constants.IdentityKey)
 			if !exists {
 				return "", jwt.ErrMissingLoginValues
 			}
