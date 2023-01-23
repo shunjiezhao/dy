@@ -18,14 +18,21 @@ package db
 import (
 	"context"
 	"first/pkg/constants"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	Uuid          int64 `gorm:"primarykey, column:uuid"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
+	UserName      string         `json:"username" gorm:"column:username"`
+	Password      string         `json:"password" gorm:"column:password"`
+	NickName      string         `json:"nickname" gorm:"column:nickname"`
+	FollowCount   int64          `json:"follow_count" gorm:"column:follow_count"`
+	FollowerCount int64          `json:"follower_count" gorm:"column:follower_count"`
 }
 
 func (u *User) TableName() string {
@@ -46,15 +53,25 @@ func MGetUsers(ctx context.Context, userIDs []int64) ([]*User, error) {
 }
 
 // CreateUser create user info
-func CreateUser(ctx context.Context, users []*User) error {
-	return DB.WithContext(ctx).Create(users).Error
+func CreateUser(ctx context.Context, users []*User) (int64, error) {
+	tx := DB.WithContext(ctx).Create(users)
+	return tx.RowsAffected, tx.Error
 }
 
-// QueryUser query list of user info
-func QueryUser(ctx context.Context, userName string) ([]*User, error) {
+// QueryUsers query list of user info
+func QueryUsers(ctx context.Context, userName string) ([]*User, error) {
 	res := make([]*User, 0)
-	if err := DB.WithContext(ctx).Where("user_name = ?", userName).Find(&res).Error; err != nil {
+	if err := DB.WithContext(ctx).Where("username = ?", userName).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+// QueryUser query  user info by UserName
+func QueryUser(ctx context.Context, userName string) (*User, error) {
+	var res User
+	if err := DB.WithContext(ctx).Where("username = ?", userName).First(&res).Error; err != nil {
+		return nil, err
+	}
+	return &res, nil
 }

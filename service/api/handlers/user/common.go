@@ -8,8 +8,8 @@ import (
 
 //TODO: 参数检验
 type RegisterRequest struct {
-	UserName string `json:"username" query:"username" vd:"len($) > 0"`
-	PassWord string `json:"password" query:"password" vd:"len($) > 5'"`
+	UserName string `json:"username" query:"username" `
+	PassWord string `json:"password" query:"password"`
 }
 
 type RegisterResponse struct {
@@ -19,14 +19,13 @@ type RegisterResponse struct {
 }
 
 type LoginRequest struct {
-	UserName string `json:"username"`
-	PassWord string `json:"password"`
+	UserName string `json:"username"  query:"username"`
+	PassWord string `json:"password" query:"password"`
 }
 
 type LoginResponse struct {
 	handlers.Response
-	UserName string `json:"username"`
-	PassWord string `json:"password"`
+	Token string `json:"token"`
 }
 
 func SendRegisterResponse(c *app.RequestContext, userId int64, token string) {

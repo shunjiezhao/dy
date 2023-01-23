@@ -9,13 +9,22 @@ message RegisterRequest{
   string user_name = 1; // UserName
   string pass_word = 2; // PassWord
 }
+message CheckUserRequest{
+  string user_name = 1; // UserName
+  string pass_word = 2; // PassWord
+}
 
 message RegisterResponse{
   BaseResp resp = 1;
   int64 id = 2;
 }
+message CheckUserResponse{
+  BaseResp resp = 1;
+  int64 id = 2;
+}
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){};
+  rpc CheckUser(CheckUserRequest) returns (CheckUserResponse){};
 }
 message User{
   int64  id = 1;
