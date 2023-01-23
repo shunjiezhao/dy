@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 	userPb "first/kitex_gen/user"
-	userService "first/kitex_gen/user/pk"
+	userService "first/kitex_gen/user/userservice"
 	"first/pkg/constants"
 	"first/pkg/middleware"
 	"github.com/cloudwego/kitex/client"
@@ -14,8 +14,6 @@ import (
 var userClient userService.Client
 
 func initUserRpc() {
-	return
-	// 保证 userClient 引用的是外面的
 	var err error
 	resolver, err := etcd.NewEtcdResolver([]string{constants.EtcdAddress})
 	if err != nil {
@@ -34,10 +32,10 @@ func initUserRpc() {
 }
 
 // Hello 是对rpc调用的包装
-func Hello(ctx context.Context, req *userPb.HelloWorldRequest) (string, error) {
-	resp, err := userClient.Hello(ctx, req)
+func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
+	resp, err := userClient.Register(ctx, req)
 	if err != nil {
-		return "", err
+		return -1, err
 	}
-	return resp.Resp, nil
+	return resp.Id, nil
 }

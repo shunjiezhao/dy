@@ -15,7 +15,7 @@
 
 package rpc
 
-// InitRPC init rpc client
-func InitRPC() {
+// InitUserRPC init rpc client
+func InitUserRPC() {
 	initUserRpc()
 }

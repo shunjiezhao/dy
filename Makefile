@@ -28,3 +28,5 @@ cleanidl:
 	@$(foreach name,$(idlPbFile), $(call mvGenFile,$(basename $(notdir $(name)))))
 
 
+http:
+	go run ./service/api/main.go
