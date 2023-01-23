@@ -8,9 +8,14 @@ import (
 func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
-	h := server.Default()
+	r := server.Default()
+	dy := r.Group("/v1")
 
-	h.GET("/hello", user.Getuser)
+	userGroup := dy.Group("user")
+	{
+		userGroup.POST("register", user.Register)
+		userGroup.GET("login", user.Login)
+	}
 
-	h.Spin()
+	r.Spin()
 }

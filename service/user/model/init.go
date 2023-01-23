@@ -17,7 +17,7 @@ package model
 
 import "first/service/user/model/db"
 
-// Init init model
-func Init() {
+// InitUserDB init model
+func InitUserDB() {
 	db.Init() // mysql init
 }
