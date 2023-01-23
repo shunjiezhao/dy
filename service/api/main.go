@@ -18,5 +18,6 @@ func main() {
 		userGroup.POST("register", user.Register)
 		userGroup.GET("login", user.Login)
 	}
+
 	r.Spin()
 }
