@@ -27,7 +27,7 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 	err error) {
 	log.Println("user rpc server: check user")
 	resp = &user.CheckUserResponse{} // 不要用 new 否则里面的resp 不会初始化
-	resp.Id, err = service.NewCheckUserService(ctx).ChekcUser(req)
+	resp.Id, err = service.NewCheckUserService(ctx).CheckUser(req)
 	if err != nil {
 		resp.Resp.StatusCode = errno.AuthorizationFailedErr.ErrCode
 		resp.Resp.StatusMsg = errno.AuthorizationFailedErr.ErrMsg

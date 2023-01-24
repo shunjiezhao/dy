@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-func Register(tokenGenerator func(data interface{}) (string, time.Time, error)) func(ctx context.Context,
+// Register 注册用户
+// @tokenGenerator: 生成 token
+// @RpcRegister: 调用 rpc 返回 userid
+func Register(tokenGenerator func(data interface{}) (string, time.Time, error), RpcRegister func(ctx context.Context, req *userPb.RegisterRequest) (int64, error)) func(ctx context.Context,
 	c *app.RequestContext) {
 	return func(ctx context.Context, c *app.RequestContext) {
 
@@ -27,7 +30,10 @@ func Register(tokenGenerator func(data interface{}) (string, time.Time, error)) 
 			UserName: param.UserName,
 			PassWord: param.PassWord,
 		}
-		userId, err := rpc.Register(ctx, &req)
+		if RpcRegister == nil {
+			RpcRegister = rpc.Register
+		}
+		userId, err := RpcRegister(ctx, &req) // 方便mock
 		if err != nil {
 			handlers.SendResponse(c, err, nil)
 			return

@@ -32,7 +32,7 @@ func initApiUserRpc() {
 	}
 }
 
-// Hello 是对rpc调用的包装
+// Register rpc调用, 如果成功返回 userid
 func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 	resp, err := userClient.Register(ctx, req)
 	if err != nil {
@@ -40,6 +40,8 @@ func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 	}
 	return resp.Id, nil
 }
+
+//CheckUser rpc调用, 检查用户是否存在,如果存在返回 userid
 func CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
 	resp, err := userClient.CheckUser(ctx, req)
 	if err != nil {

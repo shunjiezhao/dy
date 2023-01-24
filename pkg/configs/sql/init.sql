@@ -15,7 +15,6 @@
 #       (video_id): 查看视频的所有评论.
 
 create database if not exists dy;
-drop table dy.user_info;
 CREATE TABLE if not exists dy.user_info
 (
     uuid           int8         NOT NULL COMMENT '用户唯一标识',
@@ -32,7 +31,6 @@ CREATE TABLE if not exists dy.user_info
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 
-drop table dy.follow_list;
 # 关注列表
 CREATE TABLE if not exists dy.follow_list
 (
@@ -46,7 +44,6 @@ CREATE TABLE if not exists dy.follow_list
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 
-drop table dy.user_favourite_video;
 # 用户喜欢的视频表
 CREATE TABLE if not exists dy.user_favourite_video
 (
@@ -61,7 +58,6 @@ CREATE TABLE if not exists dy.user_favourite_video
   DEFAULT charset = utf8mb4;
 
 
-drop table dy.video_info;
 # 视频信息表
 CREATE TABLE if not exists dy.video_info
 (
@@ -79,7 +75,6 @@ CREATE TABLE if not exists dy.video_info
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 
-drop table dy.comment_info;
 # 评论信息表
 CREATE TABLE if not exists dy.comment_info
 (

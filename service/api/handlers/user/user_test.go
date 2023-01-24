@@ -25,7 +25,6 @@ var (
 )
 
 func TestRegister(t *testing.T) {
-	//TODO: 将 rpc 调用打桩
 	getTestUserToken(user, newExpect(t, serverAddr))
 }
 
