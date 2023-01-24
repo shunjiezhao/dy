@@ -13,6 +13,9 @@ import (
 type Client interface {
 	Register(ctx context.Context, Req *user.RegisterRequest, callOptions ...callopt.Option) (r *user.RegisterResponse, err error)
 	CheckUser(ctx context.Context, Req *user.CheckUserRequest, callOptions ...callopt.Option) (r *user.CheckUserResponse, err error)
+	GetUser(ctx context.Context, Req *user.GetUserRequest, callOptions ...callopt.Option) (r *user.GetUserResponse, err error)
+	GetFollowerList(ctx context.Context, Req *user.GetFollowerListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error)
+	GetFollowList(ctx context.Context, Req *user.GetFollowListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -52,4 +55,19 @@ func (p *kUserServiceClient) Register(ctx context.Context, Req *user.RegisterReq
 func (p *kUserServiceClient) CheckUser(ctx context.Context, Req *user.CheckUserRequest, callOptions ...callopt.Option) (r *user.CheckUserResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.CheckUser(ctx, Req)
+}
+
+func (p *kUserServiceClient) GetUser(ctx context.Context, Req *user.GetUserRequest, callOptions ...callopt.Option) (r *user.GetUserResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetUser(ctx, Req)
+}
+
+func (p *kUserServiceClient) GetFollowerList(ctx context.Context, Req *user.GetFollowerListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetFollowerList(ctx, Req)
+}
+
+func (p *kUserServiceClient) GetFollowList(ctx context.Context, Req *user.GetFollowListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetFollowList(ctx, Req)
 }

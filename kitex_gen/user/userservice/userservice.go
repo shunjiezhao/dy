@@ -22,8 +22,11 @@ func NewServiceInfo() *kitex.ServiceInfo {
 	serviceName := "UserService"
 	handlerType := (*user.UserService)(nil)
 	methods := map[string]kitex.MethodInfo{
-		"Register":  kitex.NewMethodInfo(registerHandler, newRegisterArgs, newRegisterResult, false),
-		"CheckUser": kitex.NewMethodInfo(checkUserHandler, newCheckUserArgs, newCheckUserResult, false),
+		"Register":        kitex.NewMethodInfo(registerHandler, newRegisterArgs, newRegisterResult, false),
+		"CheckUser":       kitex.NewMethodInfo(checkUserHandler, newCheckUserArgs, newCheckUserResult, false),
+		"GetUser":         kitex.NewMethodInfo(getUserHandler, newGetUserArgs, newGetUserResult, false),
+		"GetFollowerList": kitex.NewMethodInfo(getFollowerListHandler, newGetFollowerListArgs, newGetFollowerListResult, false),
+		"GetFollowList":   kitex.NewMethodInfo(getFollowListHandler, newGetFollowListArgs, newGetFollowListResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "",
@@ -329,6 +332,441 @@ func (p *CheckUserResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
+func getUserHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(user.GetUserRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(user.UserService).GetUser(ctx, req)
+		if err != nil {
+			return err
+		}
+		if err := st.SendMsg(resp); err != nil {
+			return err
+		}
+	case *GetUserArgs:
+		success, err := handler.(user.UserService).GetUser(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*GetUserResult)
+		realResult.Success = success
+	}
+	return nil
+}
+func newGetUserArgs() interface{} {
+	return &GetUserArgs{}
+}
+
+func newGetUserResult() interface{} {
+	return &GetUserResult{}
+}
+
+type GetUserArgs struct {
+	Req *user.GetUserRequest
+}
+
+func (p *GetUserArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(user.GetUserRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *GetUserArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *GetUserArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *GetUserArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, fmt.Errorf("No req in GetUserArgs")
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *GetUserArgs) Unmarshal(in []byte) error {
+	msg := new(user.GetUserRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var GetUserArgs_Req_DEFAULT *user.GetUserRequest
+
+func (p *GetUserArgs) GetReq() *user.GetUserRequest {
+	if !p.IsSetReq() {
+		return GetUserArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *GetUserArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+type GetUserResult struct {
+	Success *user.GetUserResponse
+}
+
+var GetUserResult_Success_DEFAULT *user.GetUserResponse
+
+func (p *GetUserResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(user.GetUserResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *GetUserResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *GetUserResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *GetUserResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, fmt.Errorf("No req in GetUserResult")
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *GetUserResult) Unmarshal(in []byte) error {
+	msg := new(user.GetUserResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *GetUserResult) GetSuccess() *user.GetUserResponse {
+	if !p.IsSetSuccess() {
+		return GetUserResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *GetUserResult) SetSuccess(x interface{}) {
+	p.Success = x.(*user.GetUserResponse)
+}
+
+func (p *GetUserResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func getFollowerListHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(user.GetFollowerListRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(user.UserService).GetFollowerList(ctx, req)
+		if err != nil {
+			return err
+		}
+		if err := st.SendMsg(resp); err != nil {
+			return err
+		}
+	case *GetFollowerListArgs:
+		success, err := handler.(user.UserService).GetFollowerList(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*GetFollowerListResult)
+		realResult.Success = success
+	}
+	return nil
+}
+func newGetFollowerListArgs() interface{} {
+	return &GetFollowerListArgs{}
+}
+
+func newGetFollowerListResult() interface{} {
+	return &GetFollowerListResult{}
+}
+
+type GetFollowerListArgs struct {
+	Req *user.GetFollowerListRequest
+}
+
+func (p *GetFollowerListArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(user.GetFollowerListRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *GetFollowerListArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *GetFollowerListArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *GetFollowerListArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, fmt.Errorf("No req in GetFollowerListArgs")
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *GetFollowerListArgs) Unmarshal(in []byte) error {
+	msg := new(user.GetFollowerListRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var GetFollowerListArgs_Req_DEFAULT *user.GetFollowerListRequest
+
+func (p *GetFollowerListArgs) GetReq() *user.GetFollowerListRequest {
+	if !p.IsSetReq() {
+		return GetFollowerListArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *GetFollowerListArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+type GetFollowerListResult struct {
+	Success *user.UserListResponse
+}
+
+var GetFollowerListResult_Success_DEFAULT *user.UserListResponse
+
+func (p *GetFollowerListResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(user.UserListResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *GetFollowerListResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *GetFollowerListResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *GetFollowerListResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, fmt.Errorf("No req in GetFollowerListResult")
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *GetFollowerListResult) Unmarshal(in []byte) error {
+	msg := new(user.UserListResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *GetFollowerListResult) GetSuccess() *user.UserListResponse {
+	if !p.IsSetSuccess() {
+		return GetFollowerListResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *GetFollowerListResult) SetSuccess(x interface{}) {
+	p.Success = x.(*user.UserListResponse)
+}
+
+func (p *GetFollowerListResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func getFollowListHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(user.GetFollowListRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(user.UserService).GetFollowList(ctx, req)
+		if err != nil {
+			return err
+		}
+		if err := st.SendMsg(resp); err != nil {
+			return err
+		}
+	case *GetFollowListArgs:
+		success, err := handler.(user.UserService).GetFollowList(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*GetFollowListResult)
+		realResult.Success = success
+	}
+	return nil
+}
+func newGetFollowListArgs() interface{} {
+	return &GetFollowListArgs{}
+}
+
+func newGetFollowListResult() interface{} {
+	return &GetFollowListResult{}
+}
+
+type GetFollowListArgs struct {
+	Req *user.GetFollowListRequest
+}
+
+func (p *GetFollowListArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(user.GetFollowListRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *GetFollowListArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *GetFollowListArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *GetFollowListArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, fmt.Errorf("No req in GetFollowListArgs")
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *GetFollowListArgs) Unmarshal(in []byte) error {
+	msg := new(user.GetFollowListRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var GetFollowListArgs_Req_DEFAULT *user.GetFollowListRequest
+
+func (p *GetFollowListArgs) GetReq() *user.GetFollowListRequest {
+	if !p.IsSetReq() {
+		return GetFollowListArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *GetFollowListArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+type GetFollowListResult struct {
+	Success *user.UserListResponse
+}
+
+var GetFollowListResult_Success_DEFAULT *user.UserListResponse
+
+func (p *GetFollowListResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(user.UserListResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *GetFollowListResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *GetFollowListResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *GetFollowListResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, fmt.Errorf("No req in GetFollowListResult")
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *GetFollowListResult) Unmarshal(in []byte) error {
+	msg := new(user.UserListResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *GetFollowListResult) GetSuccess() *user.UserListResponse {
+	if !p.IsSetSuccess() {
+		return GetFollowListResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *GetFollowListResult) SetSuccess(x interface{}) {
+	p.Success = x.(*user.UserListResponse)
+}
+
+func (p *GetFollowListResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -354,6 +792,36 @@ func (p *kClient) CheckUser(ctx context.Context, Req *user.CheckUserRequest) (r 
 	_args.Req = Req
 	var _result CheckUserResult
 	if err = p.c.Call(ctx, "CheckUser", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetUser(ctx context.Context, Req *user.GetUserRequest) (r *user.GetUserResponse, err error) {
+	var _args GetUserArgs
+	_args.Req = Req
+	var _result GetUserResult
+	if err = p.c.Call(ctx, "GetUser", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetFollowerList(ctx context.Context, Req *user.GetFollowerListRequest) (r *user.UserListResponse, err error) {
+	var _args GetFollowerListArgs
+	_args.Req = Req
+	var _result GetFollowerListResult
+	if err = p.c.Call(ctx, "GetFollowerList", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetFollowList(ctx context.Context, Req *user.GetFollowListRequest) (r *user.UserListResponse, err error) {
+	var _args GetFollowListArgs
+	_args.Req = Req
+	var _result GetFollowListResult
+	if err = p.c.Call(ctx, "GetFollowList", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

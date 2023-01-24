@@ -1,8 +1,10 @@
 package constants
 
 const (
-	UserTableName   = "user_info"
+	// user service
 	UserServiceName = "user"
+	UserTableName   = "user_info"
+	FollowTableName = "follow_list"
 
 	// jwt
 	SecretKey      = "secret key"

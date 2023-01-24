@@ -1,6 +1,7 @@
 package user
 
 import (
+	"first/pkg/errno"
 	"first/service/api/handlers"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -14,8 +15,8 @@ type RegisterRequest struct {
 
 type RegisterResponse struct {
 	handlers.Response
-	UserId int64  `json:"user_id"`
-	Token  string `json:"token"`
+	handlers.UserId
+	handlers.Token
 }
 
 type LoginRequest struct {
@@ -28,10 +29,25 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+type GetInfoRequest struct {
+	handlers.UserId
+	handlers.Token
+}
+type GetInfoResponse struct {
+	handlers.Response
+	*handlers.User
+}
+
 func SendRegisterResponse(c *app.RequestContext, userId int64, token string) {
 	c.JSON(consts.StatusOK, RegisterResponse{
-		Response: handlers.Response{},
-		UserId:   userId,
-		Token:    token,
+		Response: handlers.BuildResponse(errno.Success),
+		UserId:   handlers.UserId{UserId: userId},
+		Token:    handlers.Token{Token: token},
+	})
+}
+func SendGetInfoResponse(c *app.RequestContext, user *handlers.User) {
+	c.JSON(consts.StatusOK, GetInfoResponse{
+		Response: handlers.BuildResponse(errno.Success),
+		User:     user,
 	})
 }

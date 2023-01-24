@@ -19,6 +19,7 @@ import (
 	"errors"
 	user "first/kitex_gen/user"
 	"first/pkg/errno"
+	"first/service/user/model/db"
 )
 
 // BuildBaseResp build baseResp from error
@@ -37,4 +38,14 @@ func BuildBaseResp(err error) *user.BaseResp {
 }
 func baseResp(err errno.ErrNo) *user.BaseResp {
 	return &user.BaseResp{StatusCode: err.ErrCode, StatusMsg: err.ErrMsg}
+}
+func User(dUser *db.User) *user.User {
+	return &user.User{
+		Id:            dUser.Uuid,
+		UserName:      dUser.UserName,
+		FollowCount:   dUser.FollowerCount,
+		FollowerCount: dUser.FollowCount,
+		//TODO: 是否关注需查询 关注列表
+		IsFollow: false,
+	}
 }

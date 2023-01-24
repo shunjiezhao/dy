@@ -21,7 +21,7 @@ type CreateUserService struct {
 	ctx context.Context
 }
 
-// NewCreateNoteService new CreateNoteService
+// NewCreateUserService new CreateNoteService
 func NewCreateUserService(ctx context.Context) *CreateUserService {
 	return &CreateUserService{ctx: ctx}
 }

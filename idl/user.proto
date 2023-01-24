@@ -22,10 +22,37 @@ message CheckUserResponse{
   BaseResp resp = 1;
   int64 id = 2;
 }
+message GetUserRequest{
+  int64 id = 1;
+}
+message GetUserResponse{
+  BaseResp resp = 1;
+  User user = 2;
+}
+message GetFollowerListRequest{
+  int64 id = 1;
+}
+message UserListResponse{
+  BaseResp resp = 1;
+  repeated User user = 2;
+}
+
+message GetFollowListRequest{
+  int64 id = 1;
+}
+
+
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){};
   rpc CheckUser(CheckUserRequest) returns (CheckUserResponse){};
+  rpc GetUser(GetUserRequest) returns(GetUserResponse){};
+//  粉丝/好友列表
+  rpc GetFollowerList(GetFollowerListRequest)returns(UserListResponse){};
+//  关注列表
+  rpc GetFollowList(GetFollowListRequest) returns(UserListResponse){};
+
 }
+
 message User{
   int64  id = 1;
   string user_name = 2;

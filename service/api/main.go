@@ -26,6 +26,7 @@ func main() {
 	// 用户相关
 	userGroup := dy.Group("user")
 	{
+		userGroup.GET("", user.GetInfo(jwt))
 		userGroup.POST("register", user.Register(jwt.TokenGenerator, nil))
 		userGroup.GET("login", user.Login(), jwt.LoginHandler)
 	}

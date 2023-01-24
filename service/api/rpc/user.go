@@ -38,6 +38,9 @@ func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+	}
 	return resp.Id, nil
 }
 
@@ -45,11 +48,21 @@ func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 func CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
 	resp, err := userClient.CheckUser(ctx, req)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	// NOTICE: 注意判断, 可能上方用 new 导致 null pointer 异常
 	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
 		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return resp.Id, nil
+}
+func GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error) {
+	resp, err := userClient.GetUser(ctx, req)
+	if err != nil || resp.User == nil {
+		return nil, err
+	}
+	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+	}
+	return resp.User, nil
 }

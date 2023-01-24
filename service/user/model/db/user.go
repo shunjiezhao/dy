@@ -33,6 +33,7 @@ type User struct {
 	NickName      string         `json:"nickname" gorm:"column:nickname"`
 	FollowCount   int64          `json:"follow_count" gorm:"column:follow_count"`
 	FollowerCount int64          `json:"follower_count" gorm:"column:follower_count"`
+	IsFollow      bool           `json:"is_follow" gorm:"-"`
 }
 
 func (u *User) TableName() string {
@@ -40,13 +41,16 @@ func (u *User) TableName() string {
 }
 
 // MGetUsers multiple get list of user info
-func MGetUsers(ctx context.Context, userIDs []int64) ([]*User, error) {
+func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, error) {
+	if db == nil {
+		db = DB.WithContext(ctx)
+	}
 	res := make([]*User, 0)
 	if len(userIDs) == 0 {
 		return res, nil
 	}
 
-	if err := DB.WithContext(ctx).Where("id in ?", userIDs).Find(&res).Error; err != nil {
+	if err := db.Where("id in ?", userIDs).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -67,10 +71,42 @@ func QueryUsers(ctx context.Context, userName string) ([]*User, error) {
 	return res, nil
 }
 
-// QueryUser query  user info by UserName
-func QueryUser(ctx context.Context, userName string) (*User, error) {
+// QueryUserByName query  user info by UserName
+func QueryUserByName(ctx context.Context, userName string) (*User, error) {
 	var res User
 	if err := DB.WithContext(ctx).Where("username = ?", userName).First(&res).Error; err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+// QueryUserById query  user info by UserName
+func QueryUserById(ctx context.Context, id int64, followId int64) (*User, error) {
+	var user *User
+	var err error
+	if followId == 0 {
+		user, err = getUserHelper(DB.WithContext(ctx), id)
+	} else {
+		// 需要查询是否关注
+		err = DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			user, err = getUserHelper(tx, id)
+			// 关注
+			follow, err := isFollowHelper(tx, followId, id)
+			if follow && err == nil {
+				user.IsFollow = true
+			}
+			return nil
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+func getUserHelper(db *gorm.DB, id int64) (*User, error) {
+	var res User
+	if err := db.Where("uuid = ?", id).First(&res).Error; err != nil {
 		return nil, err
 	}
 	return &res, nil
