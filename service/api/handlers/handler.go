@@ -47,5 +47,11 @@ func PackUser(u *user.User) *User {
 		FollowerCount: u.FollowerCount,
 		IsFollow:      u.IsFollow,
 	}
-
+}
+func PackUsers(u []*user.User) []*User {
+	users := make([]*User, 0)
+	for i := 0; i < len(u); i++ {
+		users = append(users, PackUser(u[i]))
+	}
+	return users
 }

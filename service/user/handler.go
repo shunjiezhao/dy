@@ -66,11 +66,58 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 // GetFollowerList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerListRequest) (resp *user.UserListResponse, err error) {
 	// TODO: Your code here...
+	resp = new(user.UserListResponse)
+	resp.User, err = service.NewGetFollowerUserListService(ctx).GetFollowerUserList(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(err)
+		return nil, err
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
 }
 
 // GetFollowList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowList(ctx context.Context, req *user.GetFollowListRequest) (resp *user.UserListResponse, err error) {
 	// TODO: Your code here...
+	resp = new(user.UserListResponse)
+	resp.User, err = service.NewGetFollowUserListService(ctx).GetFollowUserList(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(err)
+		return nil, err
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+// Follow implements the UserServiceImpl interface.
+func (s *UserServiceImpl) Follow(ctx context.Context, req *user.FollowRequest) (resp *user.FollowResponse, err error) {
+	log.Println("user rpc server: follow user")
+	//TODO: 参数检查, to_user_id 是否合法
+	//??? 如果再次关注会怎么样?
+	resp = new(user.FollowResponse)
+	_, err = service.NewFollowUserService(ctx).FollowUser(req)
+	resp.Resp = pack.BuildBaseResp(err)
+
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(err)
+		return nil, err
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+// UnFollow implements the UserServiceImpl interface.
+func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest) (resp *user.FollowResponse,
+	err error) {
+	log.Println("user rpc server: follow user")
+	//TODO: 参数检查, to_user_id 是否合法
+	//??? 如果再次关注会怎么样?
+	resp = new(user.FollowResponse)
+	_, err = service.NewUnFollowUserService(ctx).UnFollowUser(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(err)
+		return nil, err
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
 }

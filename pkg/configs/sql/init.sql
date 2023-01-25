@@ -39,8 +39,8 @@ CREATE TABLE if not exists dy.follow_list
     created_at     date NOT NULL,
     updated_at     date NOT NULL,
     deleted_at     date,
-    KEY (from_user_uuid, to_user_uuid) COMMENT '查询是否关注的时候使用以及用户关注的所有用户列表 (from,to)',
-    KEY (to_user_uuid, from_user_uuid) COMMENT '所有关注登录用户的粉丝列表'
+    UNIQUE KEY (from_user_uuid, to_user_uuid) COMMENT '查询是否关注的时候使用以及用户关注的所有用户列表 (from,to)',
+    UNIQUE KEY (to_user_uuid, from_user_uuid) COMMENT '所有关注登录用户的粉丝列表'
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 

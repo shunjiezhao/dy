@@ -50,7 +50,7 @@ func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, erro
 		return res, nil
 	}
 
-	if err := db.Where("id in ?", userIDs).Find(&res).Error; err != nil {
+	if err := db.Where("uuid in ?", userIDs).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

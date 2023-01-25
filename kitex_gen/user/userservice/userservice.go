@@ -27,6 +27,8 @@ func NewServiceInfo() *kitex.ServiceInfo {
 		"GetUser":         kitex.NewMethodInfo(getUserHandler, newGetUserArgs, newGetUserResult, false),
 		"GetFollowerList": kitex.NewMethodInfo(getFollowerListHandler, newGetFollowerListArgs, newGetFollowerListResult, false),
 		"GetFollowList":   kitex.NewMethodInfo(getFollowListHandler, newGetFollowListArgs, newGetFollowListResult, false),
+		"Follow":          kitex.NewMethodInfo(followHandler, newFollowArgs, newFollowResult, false),
+		"UnFollow":        kitex.NewMethodInfo(unFollowHandler, newUnFollowArgs, newUnFollowResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "",
@@ -767,6 +769,296 @@ func (p *GetFollowListResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
+func followHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(user.FollowRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(user.UserService).Follow(ctx, req)
+		if err != nil {
+			return err
+		}
+		if err := st.SendMsg(resp); err != nil {
+			return err
+		}
+	case *FollowArgs:
+		success, err := handler.(user.UserService).Follow(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*FollowResult)
+		realResult.Success = success
+	}
+	return nil
+}
+func newFollowArgs() interface{} {
+	return &FollowArgs{}
+}
+
+func newFollowResult() interface{} {
+	return &FollowResult{}
+}
+
+type FollowArgs struct {
+	Req *user.FollowRequest
+}
+
+func (p *FollowArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(user.FollowRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *FollowArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *FollowArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *FollowArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, fmt.Errorf("No req in FollowArgs")
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *FollowArgs) Unmarshal(in []byte) error {
+	msg := new(user.FollowRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var FollowArgs_Req_DEFAULT *user.FollowRequest
+
+func (p *FollowArgs) GetReq() *user.FollowRequest {
+	if !p.IsSetReq() {
+		return FollowArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *FollowArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+type FollowResult struct {
+	Success *user.FollowResponse
+}
+
+var FollowResult_Success_DEFAULT *user.FollowResponse
+
+func (p *FollowResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(user.FollowResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *FollowResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *FollowResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *FollowResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, fmt.Errorf("No req in FollowResult")
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *FollowResult) Unmarshal(in []byte) error {
+	msg := new(user.FollowResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *FollowResult) GetSuccess() *user.FollowResponse {
+	if !p.IsSetSuccess() {
+		return FollowResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *FollowResult) SetSuccess(x interface{}) {
+	p.Success = x.(*user.FollowResponse)
+}
+
+func (p *FollowResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func unFollowHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(user.FollowRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(user.UserService).UnFollow(ctx, req)
+		if err != nil {
+			return err
+		}
+		if err := st.SendMsg(resp); err != nil {
+			return err
+		}
+	case *UnFollowArgs:
+		success, err := handler.(user.UserService).UnFollow(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*UnFollowResult)
+		realResult.Success = success
+	}
+	return nil
+}
+func newUnFollowArgs() interface{} {
+	return &UnFollowArgs{}
+}
+
+func newUnFollowResult() interface{} {
+	return &UnFollowResult{}
+}
+
+type UnFollowArgs struct {
+	Req *user.FollowRequest
+}
+
+func (p *UnFollowArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(user.FollowRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *UnFollowArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *UnFollowArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *UnFollowArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, fmt.Errorf("No req in UnFollowArgs")
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *UnFollowArgs) Unmarshal(in []byte) error {
+	msg := new(user.FollowRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var UnFollowArgs_Req_DEFAULT *user.FollowRequest
+
+func (p *UnFollowArgs) GetReq() *user.FollowRequest {
+	if !p.IsSetReq() {
+		return UnFollowArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *UnFollowArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+type UnFollowResult struct {
+	Success *user.FollowResponse
+}
+
+var UnFollowResult_Success_DEFAULT *user.FollowResponse
+
+func (p *UnFollowResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(user.FollowResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *UnFollowResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *UnFollowResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *UnFollowResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, fmt.Errorf("No req in UnFollowResult")
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *UnFollowResult) Unmarshal(in []byte) error {
+	msg := new(user.FollowResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *UnFollowResult) GetSuccess() *user.FollowResponse {
+	if !p.IsSetSuccess() {
+		return UnFollowResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *UnFollowResult) SetSuccess(x interface{}) {
+	p.Success = x.(*user.FollowResponse)
+}
+
+func (p *UnFollowResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -822,6 +1114,26 @@ func (p *kClient) GetFollowList(ctx context.Context, Req *user.GetFollowListRequ
 	_args.Req = Req
 	var _result GetFollowListResult
 	if err = p.c.Call(ctx, "GetFollowList", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) Follow(ctx context.Context, Req *user.FollowRequest) (r *user.FollowResponse, err error) {
+	var _args FollowArgs
+	_args.Req = Req
+	var _result FollowResult
+	if err = p.c.Call(ctx, "Follow", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UnFollow(ctx context.Context, Req *user.FollowRequest) (r *user.FollowResponse, err error) {
+	var _args UnFollowArgs
+	_args.Req = Req
+	var _result UnFollowResult
+	if err = p.c.Call(ctx, "UnFollow", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

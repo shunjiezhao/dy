@@ -41,6 +41,14 @@ message GetFollowListRequest{
   int64 id = 1;
 }
 
+message FollowRequest{
+  int64 from_user_id = 1;
+  int64 to_user_id = 2;
+}
+
+message FollowResponse{
+  BaseResp resp = 1;
+}
 
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){};
@@ -50,7 +58,10 @@ service UserService{
   rpc GetFollowerList(GetFollowerListRequest)returns(UserListResponse){};
 //  关注列表
   rpc GetFollowList(GetFollowListRequest) returns(UserListResponse){};
-
+//  关注某个用户
+  rpc Follow(FollowRequest) returns(FollowResponse){};
+//  取消关注某个用户
+  rpc UnFollow(FollowRequest) returns(FollowResponse){};
 }
 
 message User{

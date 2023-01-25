@@ -39,13 +39,20 @@ func BuildBaseResp(err error) *user.BaseResp {
 func baseResp(err errno.ErrNo) *user.BaseResp {
 	return &user.BaseResp{StatusCode: err.ErrCode, StatusMsg: err.ErrMsg}
 }
+
+func Users(dUsers []*db.User) []*user.User {
+	users := make([]*user.User, 0)
+	for i := 0; i < len(dUsers); i++ {
+		users = append(users, User(dUsers[i]))
+	}
+	return users
+}
 func User(dUser *db.User) *user.User {
 	return &user.User{
 		Id:            dUser.Uuid,
 		UserName:      dUser.UserName,
 		FollowCount:   dUser.FollowerCount,
 		FollowerCount: dUser.FollowCount,
-		//TODO: 是否关注需查询 关注列表
-		IsFollow: false,
+		IsFollow:      dUser.IsFollow,
 	}
 }

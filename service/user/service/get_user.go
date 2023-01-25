@@ -19,7 +19,7 @@ func NewGetUserService(ctx context.Context) *GetUserService {
 // GetUser create note info
 func (s *GetUserService) GetUser(req *user.GetUserRequest) (*user.User, error) {
 	println("rpc 响应开始调用")
-	user, err := db.QueryUserById(s.ctx, req.Id)
+	user, err := db.QueryUserById(s.ctx, req.Id, 0)
 	if err != nil {
 		return nil, err
 	}

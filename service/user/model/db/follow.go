@@ -3,14 +3,19 @@ package db
 import (
 	"context"
 	"first/pkg/constants"
+	"first/pkg/errno"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+	"log"
+	"sort"
+	"time"
 )
 
 type Follow struct {
-	gorm.Model
-	FromUserUuid int64 `gorm:"column:from_user_uuid"`
-	ToUserUuid   int64 `gorm:"column:to_user_uuid"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	FromUserUuid int64          `gorm:"column:from_user_uuid"`
+	ToUserUuid   int64          `gorm:"column:to_user_uuid"`
 }
 
 func (f *Follow) TableName() string {
@@ -34,51 +39,46 @@ func isFollowHelper(db *gorm.DB, id int64, followerId int64) (bool, error) {
 }
 
 func FollowUser(ctx context.Context, id int64, followerId int64) (bool, error) {
-	err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.
-			Clauses(clause.OnConflict{DoNothing: true}).Create(&Follow{
-			FromUserUuid: followerId,
-			ToUserUuid:   id,
-		}).Error
-		if err != nil {
-			//TODO:日志
-			return err
-		}
-		err = updateUserFollowInfo(tx, followerId, id, true)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+	// from 关注 to
+	return followHelper(ctx, id, followerId, true, false)
 }
 func UnFollowUser(ctx context.Context, id int64, followerId int64) (bool, error) {
-	// from 取消关注 to
+	// from 取消关注 to 记录需要以前存在吗?
+	return followHelper(ctx, id, followerId, false, true)
+}
+
+// followHelper bool:返回之前是否存在该条记录
+func followHelper(ctx context.Context, id int64, followerId int64, add bool, shouldExist bool) (bool, error) {
+	follow := &Follow{
+		FromUserUuid: followerId,
+		ToUserUuid:   id,
+	}
+	isExist := true
 	err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.
-			Clauses(clause.OnConflict{DoNothing: true}).Delete(&Follow{
-			FromUserUuid: followerId,
-			ToUserUuid:   id,
-		}).Error
-		if err != nil {
-			//TODO:日志
+		var db *gorm.DB
+		if add {
+			db = tx.Where(follow).FirstOrCreate(&follow)
+		} else {
+			db = tx.Where(follow).Delete(&Follow{})
+		}
+		if err := db.Error; err != nil {
+			log.Println("社交操作: 失败 ", err.Error())
 			return err
 		}
-		err = updateUserFollowInfo(tx, followerId, id, false)
-		if err != nil {
+		isExist = db.RowsAffected == 0
+		if !isExist && shouldExist { //已经关注
+			log.Println("社交操作: 记录先前不存在")
+			return errno.RecordNotExistErr
+		}
+		if err := updateUserFollowInfo(tx, followerId, id, true); err != nil {
 			return err
 		}
 		return nil
 	})
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+	return isExist, err
 }
 
+//updateUserFollowInfo 更新相关用户的社交信息, 需要包装在一个事务里面.
 func updateUserFollowInfo(tx *gorm.DB, followerId int64, id int64, inc bool) error {
 	op := "+"
 	if !inc {
@@ -102,35 +102,92 @@ func updateUserFollowInfo(tx *gorm.DB, followerId int64, id int64, inc bool) err
 	return nil
 }
 
-//GetFollowList 获取关注列表
-func GetFollowList(ctx context.Context, fromUserId int64) ([]*User, error) {
-	return getFollowListByIdStat(ctx, fromUserId, "from_user_uuid = ?")
+//TODO: 使用 join 来优化 查询关注/粉丝列表, 更新其是否关注字段
+
+//GetFollowUserList 获取关注列表
+func GetFollowUserList(ctx context.Context, fromUserId int64) ([]*User, error) {
+	userList, err := getFollowListByIdStat(ctx, fromUserId, "from_user_uuid = ?", true)
+	if err != nil {
+		return nil, err
+	}
+	// 获取关注的列表, 将是否关注改为 true
+	for i := 0; i < len(userList); i++ {
+		userList[i].IsFollow = true
+	}
+	return userList, nil
 }
 
-//GetFollowerList 获取粉丝列表
-func GetFollowerList(ctx context.Context, toUserId int64) ([]*User, error) {
-	return getFollowListByIdStat(ctx, toUserId, "to_user_uuid = ?")
+//GetFollowerUserList 获取粉丝列表
+func GetFollowerUserList(ctx context.Context, toUserId int64) ([]*User, error) {
+	userList, err := getFollowListByIdStat(ctx, toUserId, "to_user_uuid = ?", false)
+	// 查询是否关注自己
+	if err != nil {
+		return nil, err
+	}
+	// 获取关注的列表, 更改是否关注字段
+
+	follows := make([]*Follow, 0)
+	userIDs := make([]int64, len(userList))
+	for i := 0; i < len(userList); i++ {
+		userIDs[i] = userList[i].Uuid
+	}
+	if err := DB.WithContext(ctx).Select("to_user_uuid").Where("from_user_uuid = ? and to_user_uuid in ?", toUserId,
+		userIDs).Find(&follows).Error; err != nil {
+		log.Println("获取粉丝列表时 查询是否关注出错")
+		return nil, err
+	}
+	// 更改字段
+	sort.Slice(userList, func(i, j int) bool {
+		return userList[i].Uuid < userList[j].Uuid
+	})
+	sort.Slice(follows, func(i, j int) bool {
+		return follows[i].ToUserUuid < follows[j].ToUserUuid
+	})
+
+	i, j := 0, 0
+	for i != len(userList) && j != len(follows) {
+		if userList[i].Uuid == follows[j].ToUserUuid { // 如果是关注的人的话
+			userList[i].IsFollow = true
+			i, j = i+1, j+1
+		} else if userList[i].Uuid < follows[j].ToUserUuid {
+			i++
+		} else {
+			j++
+		}
+	}
+	return userList, nil
 }
 
-func getFollowListByIdStat(ctx context.Context, id int64, query string) ([]*User, error) {
+func getFollowListByIdStat(ctx context.Context, id int64, query string, isFollow bool) ([]*User, error) {
 	var followList []*Follow
 	var userList []*User
 	if err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		//1. 查询关注列表
-		err := tx.Where(query, id).Find(&followList).Error
+		db := tx.Where(query, id).Find(&followList)
+		err := db.Error
 		if err != nil {
 			return err
 		}
-		var userIDs []int64
+		// 如果没有关注的人
+		if db.RowsAffected == 0 {
+			return nil
+		}
+		userIDs := make([]int64, len(followList))
+
 		// 将 关注的 用户的 ID 提取出来
-		for _, follow := range followList {
-			userIDs = append(userIDs, follow.ToUserUuid)
+		for i := 0; i < len(followList); i++ {
+			if isFollow {
+				userIDs[i] = followList[i].ToUserUuid
+			} else {
+				userIDs[i] = followList[i].FromUserUuid
+			}
 		}
 		//2. 获取用户列表
 		userList, err = MGetUsers(tx, ctx, userIDs)
 		if err != nil {
 			return err
 		}
+
 		return nil
 	}); err != nil {
 		return nil, err

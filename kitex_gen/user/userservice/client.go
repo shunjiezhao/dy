@@ -16,6 +16,8 @@ type Client interface {
 	GetUser(ctx context.Context, Req *user.GetUserRequest, callOptions ...callopt.Option) (r *user.GetUserResponse, err error)
 	GetFollowerList(ctx context.Context, Req *user.GetFollowerListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error)
 	GetFollowList(ctx context.Context, Req *user.GetFollowListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error)
+	Follow(ctx context.Context, Req *user.FollowRequest, callOptions ...callopt.Option) (r *user.FollowResponse, err error)
+	UnFollow(ctx context.Context, Req *user.FollowRequest, callOptions ...callopt.Option) (r *user.FollowResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -70,4 +72,14 @@ func (p *kUserServiceClient) GetFollowerList(ctx context.Context, Req *user.GetF
 func (p *kUserServiceClient) GetFollowList(ctx context.Context, Req *user.GetFollowListRequest, callOptions ...callopt.Option) (r *user.UserListResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.GetFollowList(ctx, Req)
+}
+
+func (p *kUserServiceClient) Follow(ctx context.Context, Req *user.FollowRequest, callOptions ...callopt.Option) (r *user.FollowResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.Follow(ctx, Req)
+}
+
+func (p *kUserServiceClient) UnFollow(ctx context.Context, Req *user.FollowRequest, callOptions ...callopt.Option) (r *user.FollowResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.UnFollow(ctx, Req)
 }

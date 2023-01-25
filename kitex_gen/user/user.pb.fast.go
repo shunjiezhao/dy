@@ -362,6 +362,71 @@ func (x *GetFollowListRequest) fastReadField1(buf []byte, _type int8) (offset in
 	return offset, err
 }
 
+func (x *FollowRequest) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 2:
+		offset, err = x.fastReadField2(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_FollowRequest[number], err)
+}
+
+func (x *FollowRequest) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	x.FromUserId, offset, err = fastpb.ReadInt64(buf, _type)
+	return offset, err
+}
+
+func (x *FollowRequest) fastReadField2(buf []byte, _type int8) (offset int, err error) {
+	x.ToUserId, offset, err = fastpb.ReadInt64(buf, _type)
+	return offset, err
+}
+
+func (x *FollowResponse) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_FollowResponse[number], err)
+}
+
+func (x *FollowResponse) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	var v BaseResp
+	offset, err = fastpb.ReadMessage(buf, _type, &v)
+	if err != nil {
+		return offset, err
+	}
+	x.Resp = &v
+	return offset, nil
+}
+
 func (x *User) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
 	switch number {
 	case 1:
@@ -652,6 +717,47 @@ func (x *GetFollowListRequest) fastWriteField1(buf []byte) (offset int) {
 	return offset
 }
 
+func (x *FollowRequest) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	offset += x.fastWriteField2(buf[offset:])
+	return offset
+}
+
+func (x *FollowRequest) fastWriteField1(buf []byte) (offset int) {
+	if x.FromUserId == 0 {
+		return offset
+	}
+	offset += fastpb.WriteInt64(buf[offset:], 1, x.FromUserId)
+	return offset
+}
+
+func (x *FollowRequest) fastWriteField2(buf []byte) (offset int) {
+	if x.ToUserId == 0 {
+		return offset
+	}
+	offset += fastpb.WriteInt64(buf[offset:], 2, x.ToUserId)
+	return offset
+}
+
+func (x *FollowResponse) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	return offset
+}
+
+func (x *FollowResponse) fastWriteField1(buf []byte) (offset int) {
+	if x.Resp == nil {
+		return offset
+	}
+	offset += fastpb.WriteMessage(buf[offset:], 1, x.Resp)
+	return offset
+}
+
 func (x *User) FastWrite(buf []byte) (offset int) {
 	if x == nil {
 		return offset
@@ -929,6 +1035,47 @@ func (x *GetFollowListRequest) sizeField1() (n int) {
 	return n
 }
 
+func (x *FollowRequest) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	n += x.sizeField2()
+	return n
+}
+
+func (x *FollowRequest) sizeField1() (n int) {
+	if x.FromUserId == 0 {
+		return n
+	}
+	n += fastpb.SizeInt64(1, x.FromUserId)
+	return n
+}
+
+func (x *FollowRequest) sizeField2() (n int) {
+	if x.ToUserId == 0 {
+		return n
+	}
+	n += fastpb.SizeInt64(2, x.ToUserId)
+	return n
+}
+
+func (x *FollowResponse) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	return n
+}
+
+func (x *FollowResponse) sizeField1() (n int) {
+	if x.Resp == nil {
+		return n
+	}
+	n += fastpb.SizeMessage(1, x.Resp)
+	return n
+}
+
 func (x *User) Size() (n int) {
 	if x == nil {
 		return n
@@ -1026,6 +1173,15 @@ var fieldIDToName_UserListResponse = map[int32]string{
 
 var fieldIDToName_GetFollowListRequest = map[int32]string{
 	1: "Id",
+}
+
+var fieldIDToName_FollowRequest = map[int32]string{
+	1: "FromUserId",
+	2: "ToUserId",
+}
+
+var fieldIDToName_FollowResponse = map[int32]string{
+	1: "Resp",
 }
 
 var fieldIDToName_User = map[int32]string{
