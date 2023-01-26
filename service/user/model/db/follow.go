@@ -53,9 +53,14 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 		FromUserUuid: followerId,
 		ToUserUuid:   id,
 	}
+	// TODO: fastpath  add or delete 的情况下 查询记录是否已经存在
+
 	isExist := true
 	err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var db *gorm.DB
+		if err := updateUserFollowInfo(tx, followerId, id, add); err != nil {
+			return err
+		}
 		if add {
 			db = tx.Where(follow).FirstOrCreate(&follow)
 		} else {
@@ -65,14 +70,16 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 			log.Println("社交操作: 失败 ", err.Error())
 			return err
 		}
-		isExist = db.RowsAffected == 0
-		if !isExist && shouldExist { //已经关注
-			log.Println("社交操作: 记录先前不存在")
-			return errno.RecordNotExistErr
+		isExist = db.RowsAffected != 0
+		if !isExist {
+			if shouldExist {
+				log.Println("社交操作: 关注记录先前不存在")
+				return errno.RecordNotExistErr
+			}
+			log.Println("社交操作: 关注记录先前存在")
+			return errno.RecordAlreadyExistErr
 		}
-		if err := updateUserFollowInfo(tx, followerId, id, true); err != nil {
-			return err
-		}
+
 		return nil
 	})
 	return isExist, err
@@ -85,19 +92,30 @@ func updateUserFollowInfo(tx *gorm.DB, followerId int64, id int64, inc bool) err
 		op = "-"
 	}
 	//增加 user 的 follow_count 和 follower_count
-	if err := tx.Model(&User{}).Where("uuid = ?", followerId).Updates(map[string]interface{}{"follow_count": gorm.
+	db := tx.Model(&User{}).Where("uuid = ?", followerId).Updates(map[string]interface{}{"follow_count": gorm.
 		Expr(
 			"follow_count "+op+" ?",
-			1)}).Error; err != nil {
+			1)})
+	err := db.Error
+	if err != nil {
 		//TODO:日志
 		return err
 	}
-	if err := tx.Model(&User{}).Where("uuid = ?",
+	if db.RowsAffected == 0 {
+		return errno.RecordNotExistErr
+	}
+
+	db = tx.Model(&User{}).Where("uuid = ?",
 		id).Updates(map[string]interface{}{"follower_count": gorm.Expr(
 		"follower_count "+op+" ?",
-		1)}).Error; err != nil {
+		1)})
+	err = db.Error
+	if err != nil {
 		//TODO:日志
 		return err
+	}
+	if db.RowsAffected == 0 {
+		return errno.RecordNotExistErr
 	}
 	return nil
 }

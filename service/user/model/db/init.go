@@ -19,24 +19,28 @@ import (
 	"first/pkg/constants"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"sync"
 )
 
 var DB *gorm.DB
+var once sync.Once
 
 // Init init DB
 func Init() {
-	var err error
-	DB, err = gorm.Open(mysql.Open(constants.MySQLDefaultDSN),
-		&gorm.Config{
-			PrepareStmt:            true,
-			SkipDefaultTransaction: true,
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
-	//
-	//if err = DB.Use(gormopentracing.New()); err != nil {
-	//	panic(err)
-	//}
+	once.Do(func() {
+		var err error
+		DB, err = gorm.Open(mysql.Open(constants.MySQLDefaultDSN),
+			&gorm.Config{
+				PrepareStmt:            true,
+				SkipDefaultTransaction: true,
+			},
+		)
+		if err != nil {
+			panic(err)
+		}
+		//
+		//if err = DB.Use(gormopentracing.New()); err != nil {
+		//	panic(err)
+		//}
+	})
 }
