@@ -27,6 +27,7 @@ services:
     image: mysql:latest
     volumes:
       - ./pkg/configs/sql:/docker-entrypoint-initdb.d
+    privileged: true
     ports:
       - 3307:3306
     environment:

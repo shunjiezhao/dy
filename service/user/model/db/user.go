@@ -40,7 +40,7 @@ func (u *User) TableName() string {
 	return constants.UserTableName
 }
 
-// MGetUsers multiple get list of user info
+// MGetUsers multiple get list of user info order by uuid DESC
 func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, error) {
 	if db == nil {
 		db = DB.WithContext(ctx)
@@ -50,7 +50,7 @@ func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, erro
 		return res, nil
 	}
 
-	if err := db.Where("uuid in ?", userIDs).Find(&res).Error; err != nil {
+	if err := db.Order("uuid DESC").Where("uuid in ?", userIDs).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

@@ -12,6 +12,7 @@ import (
 )
 
 func TestGetFollowUserList(t *testing.T) {
+	Init()
 	// 删除
 	assert.Empty(t, DB.Unscoped().Delete(&User{}, 1, 2, 3, 4).Error)
 
@@ -123,6 +124,7 @@ func TestFollowUser(t *testing.T) {
 		from      int64
 		to        int64
 		shouldErr bool
+		isNew     bool
 		// from follow , follower info,  to follow follower info
 		shouldFollowInfo map[int][2]int64
 		op               func(ctx context.Context, id int64, followerId int64) (bool, error)
@@ -135,7 +137,8 @@ func TestFollowUser(t *testing.T) {
 				1: [2]int64{0: 1, 1: 0},
 				2: [2]int64{0: 0, 1: 1},
 			},
-			op: FollowUser,
+			isNew: true,
+			op:    FollowUser,
 		},
 		{
 			name:      "关注不存在的用户",
@@ -166,8 +169,8 @@ func TestFollowUser(t *testing.T) {
 				1: [2]int64{0: 1, 1: 0},
 				2: [2]int64{0: 0, 1: 1},
 			},
-			shouldErr: true,
-			op:        FollowUser,
+
+			op: FollowUser,
 		},
 		{
 			name: "取消关注",
@@ -177,7 +180,19 @@ func TestFollowUser(t *testing.T) {
 				1: [2]int64{0: 0, 1: 0},
 				2: [2]int64{0: 0, 1: 0},
 			},
-			op: UnFollowUser,
+			isNew: true,
+			op:    UnFollowUser,
+		},
+		{
+			name: "再次取消关注",
+			from: 1,
+			to:   2,
+			shouldFollowInfo: map[int][2]int64{
+				1: [2]int64{0: 0, 1: 0},
+				2: [2]int64{0: 0, 1: 0},
+			},
+			shouldErr: true,
+			op:        UnFollowUser,
 		},
 	}
 
@@ -185,7 +200,7 @@ func TestFollowUser(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotEmpty(DB, "database not init")
 	for _, c := range cases {
-		_, err := c.op(ctx, c.to, c.from)
+		isNew, err := c.op(ctx, c.to, c.from)
 		var fromUser User
 		dbErr := DB.First(&fromUser, c.from).Error
 		assert.Empty(dbErr, "%s: get error: %s", c.name, dbErr)
@@ -198,6 +213,7 @@ func TestFollowUser(t *testing.T) {
 				fromUser.FollowerCount)
 			continue
 		}
+		assert.Equal(c.isNew, isNew)
 		assert.Empty(err, "%s: get error: %s", c.name, err)
 		// 查询信息
 		var toUser User

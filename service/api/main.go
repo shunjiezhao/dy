@@ -15,20 +15,16 @@ func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
 	Init()
-	r := server.New(
-		server.WithHostPorts(":8888"),
-		server.WithHandleMethodNotAllowed(true),
-	)
+	r := server.Default()
 	jwt := middleware.JwtMiddle()
 
 	dy := r.Group("/douyin")
 
 	// 用户相关
-	userGroup := dy.Group("user")
 	{
-		userGroup.GET("", user.GetInfo(jwt))
-		userGroup.POST("register", user.Register(jwt.TokenGenerator, nil))
-		userGroup.GET("login", user.Login(), jwt.LoginHandler)
+		dy.GET("/user", user.GetInfo(jwt))
+		dy.POST("/user/register", user.Register(jwt.TokenGenerator, nil))
+		dy.GET("/user/login", user.Login(), jwt.LoginHandler)
 	}
 	// 社交接口的相关实现
 	relationGroup := dy.Group("relation")
