@@ -1,7 +1,6 @@
 package main
 
 import (
-	"first/pkg/constants"
 	"first/pkg/middleware"
 	"first/service/api/handlers/follow"
 	"first/service/api/handlers/user"
@@ -17,7 +16,7 @@ func main() {
 	// If you need a pure hertz, you can use server.New()
 	Init()
 	r := server.New(
-		server.WithHostPorts(constants.ApiServerAddress),
+		server.WithHostPorts(":8888"),
 		server.WithHandleMethodNotAllowed(true),
 	)
 	jwt := middleware.JwtMiddle()
@@ -34,9 +33,10 @@ func main() {
 	// 社交接口的相关实现
 	relationGroup := dy.Group("relation")
 	{
-		//relationGroup.GET("follow/list")
-		relationGroup.GET("follower/list", follow.GetFollowerList(jwt.GetClaimsFromJWT))
-		relationGroup.POST("action", follow.Follow(jwt.GetClaimsFromJWT))
+		followSrv := follow.New(jwt.GetClaimsFromJWT)
+		relationGroup.GET("follow/list", followSrv.GetFollowList())
+		relationGroup.GET("follower/list", followSrv.GetFollowerList())
+		relationGroup.POST("action", followSrv.Follow())
 	}
 
 	r.Spin()

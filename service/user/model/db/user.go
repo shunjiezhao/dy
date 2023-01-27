@@ -56,10 +56,15 @@ func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, erro
 	return res, nil
 }
 
-// CreateUser create user info
-func CreateUser(ctx context.Context, users []*User) (int64, error) {
+// CreateUsers create user info
+func CreateUsers(ctx context.Context, users []*User) (int64, error) {
 	tx := DB.WithContext(ctx).Create(users)
 	return tx.RowsAffected, tx.Error
+}
+
+func CreateUser(ctx context.Context, users *User) (int64, error) {
+	tx := DB.WithContext(ctx).Create(users)
+	return users.Uuid, tx.Error
 }
 
 // QueryUsers query list of user info

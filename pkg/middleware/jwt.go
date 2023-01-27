@@ -19,8 +19,8 @@ func JwtMiddle() *jwt.HertzJWTMiddleware {
 		MaxRefresh:       time.Hour,
 		IdentityKey:      constants.IdentityKey,
 		SigningAlgorithm: "RS256",
-		PubKeyFile:       constants.PublicKeyFile,
-		PrivKeyFile:      constants.PrivateKeyFile,
+		PubKeyBytes:      constants.PublicKeyFile,
+		PrivKeyBytes:     constants.PrivateKeyFile,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(int64); ok {
 				return jwt.MapClaims{

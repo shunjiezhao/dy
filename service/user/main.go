@@ -21,12 +21,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	addr, err := net.ResolveTCPAddr("tcp", constants.UserServerAddress)
+	addr, err := net.ResolveTCPAddr("tcp", "")
 	if err != nil {
 		panic(err)
 	}
 	Init()
-	svr := user.NewServer(new(UserServiceImpl),
+	svr := user.NewServer(&UserServiceImpl{},
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.UserServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                             // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),

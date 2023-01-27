@@ -5,6 +5,7 @@ import (
 	"first/service/api/handlers"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/cloudwego/kitex/pkg/klog"
 )
 
 type (
@@ -25,7 +26,7 @@ type (
 	}
 	GetUserFollowerListResponse struct {
 		handlers.Response
-		Users []*handlers.User `json:"users,omitempty"`
+		Users []*handlers.User `json:"user_list,omitempty"`
 	}
 
 	GetUserFollowListRequest struct {
@@ -42,6 +43,7 @@ func (a ActionType) IsFollow() bool {
 	return a == 1
 }
 func SendUserListResponse(c *app.RequestContext, users []*handlers.User) {
+	klog.Infof("get user list %v", users[0])
 	c.JSON(consts.StatusOK, GetUserFollowerListResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		Users:    users,

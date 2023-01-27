@@ -34,7 +34,7 @@ func (s *CreateUserService) CreateUser(req *user.RegisterRequest) (int64, error)
 		UserName: req.UserName,
 		Password: encryptPassWord(req.PassWord),
 	}
-	return db.CreateUser(s.ctx, []*db.User{userModel})
+	return db.CreateUser(s.ctx, userModel)
 }
 
 //TODO: 加密密码

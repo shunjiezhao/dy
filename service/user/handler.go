@@ -110,8 +110,6 @@ func (s *UserServiceImpl) Follow(ctx context.Context, req *user.FollowRequest) (
 func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest) (resp *user.FollowResponse,
 	err error) {
 	log.Println("user rpc server: follow user")
-	//TODO: 参数检查, to_user_id 是否合法
-	//??? 如果再次关注会怎么样?
 	resp = new(user.FollowResponse)
 	_, err = service.NewUnFollowUserService(ctx).UnFollowUser(req)
 	if err != nil {

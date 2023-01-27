@@ -8,6 +8,7 @@ import (
 	"first/service/api/handlers"
 	"first/service/api/rpc"
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/hertz-contrib/jwt"
 	"time"
 )
@@ -66,6 +67,7 @@ func Login() func(ctx context.Context, c *app.RequestContext) {
 			c.Abort()
 			return
 		}
+		klog.Infof("set success")
 		c.Set(constants.IdentityKey, Uuid)
 	}
 }

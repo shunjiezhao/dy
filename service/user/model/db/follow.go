@@ -54,7 +54,6 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 		ToUserUuid:   id,
 	}
 	// TODO: fastpath  add or delete 的情况下 查询记录是否已经存在
-
 	isExist := true
 	err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var db *gorm.DB
@@ -82,6 +81,10 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 
 		return nil
 	})
+	// NOTICE: 如果已经关注, 那么直接返回成功
+	if err == errno.RecordAlreadyExistErr {
+		err = nil
+	}
 	return isExist, err
 }
 

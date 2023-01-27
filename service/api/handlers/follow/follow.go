@@ -11,84 +11,109 @@ import (
 	jwt2 "github.com/hertz-contrib/jwt"
 )
 
-func GetFollowerList(parse func(ctx context.Context, c *app.RequestContext) (jwt2.MapClaims, error)) func(ctx context.Context, c *app.RequestContext) {
+type Service struct {
+	parseToken func(ctx context.Context, c *app.RequestContext) (jwt2.MapClaims, error)
+}
+
+func New(parse func(ctx context.Context, c *app.RequestContext) (jwt2.MapClaims, error)) *Service {
+	return &Service{parseToken: parse}
+}
+
+//TODO: 1. 不能获取别人的关注/粉丝列表, 但是可以获取别人的关注/粉丝列表嘛?
+
+func (s *Service) GetFollowerList() func(ctx context.Context, c *app.RequestContext) {
 	return func(ctx context.Context, c *app.RequestContext) {
-		curUserId := getTokenUserId(ctx, c, parse)
+		var (
+			err       error
+			req       *userPb.GetFollowerListRequest // rpc 调用参数
+			param     GetUserFollowerListRequest     //http 请求参数
+			curUserId int64                          //当前用户的 userid
+			list      []*userPb.User                 // 返回的粉丝列表
+		)
+		curUserId = getTokenUserId(ctx, c, s.parseToken)
+		if curUserId == -1 {
+			goto errHandler
+		}
+		// token 检验成功 开始 绑定参数
+		err = c.Bind(&param)
+		//TODO: 1
+		if err != nil || curUserId != param.UserId.UserId {
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
+		}
+		// rpc 调用
+		req = &userPb.GetFollowerListRequest{
+			Id: param.UserId.UserId,
+		}
+		list, err = rpc.GetFollowerList(ctx, req)
+		if err != nil {
+			handlers.SendResponse(c, err)
+			goto errHandler
+		}
+		SendUserListResponse(c, handlers.PackUsers(list))
+	errHandler:
+		c.Abort()
+		return
+	}
+}
+func (s *Service) GetFollowList() func(ctx context.Context, c *app.RequestContext) {
+
+	return func(ctx context.Context, c *app.RequestContext) {
+		var (
+			err       error
+			req       *userPb.GetFollowListRequest // rpc 调用参数
+			param     GetUserFollowListRequest     //http 请求参数
+			curUserId int64                        //当前用户的 userid
+			list      []*userPb.User               // 返回的关注列表
+		)
+		curUserId = getTokenUserId(ctx, c, s.parseToken)
 		if curUserId == -1 {
 			return
 		}
-		// token 检验成功
-		var param GetUserFollowerListRequest
-		// 绑定参数
-		err := c.Bind(&param)
-		//TODO: 这里是不能获取别人的关注列表, 但是 是否可以 真正获取别人的关注列表呢?
+		// token 检验成功 开始  绑定参数
+		err = c.Bind(&param)
+		//TODO: 1
 		if err != nil || curUserId != param.UserId.UserId {
 			handlers.SendResponse(c, errno.ParamErr)
-			c.Abort()
-			return
+			goto errHandler
 		}
 		// rpc
-		req := &userPb.GetFollowerListRequest{
+		req = &userPb.GetFollowListRequest{
 			Id: param.UserId.UserId,
 		}
-		list, err := rpc.GetFollowerList(ctx, req)
+		list, err = rpc.GetFollowList(ctx, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
-			c.Abort()
-			return
+			goto errHandler
 		}
 		SendUserListResponse(c, handlers.PackUsers(list))
+	errHandler:
+		c.Abort()
+		return
 	}
 }
-func GetFollowList(parse func(ctx context.Context, c *app.RequestContext) (jwt2.MapClaims, error)) func(ctx context.Context, c *app.RequestContext) {
-	return func(ctx context.Context, c *app.RequestContext) {
-		curUserId := getTokenUserId(ctx, c, parse)
-		if curUserId == -1 {
-			return
-		}
-		// token 检验成功
-		var param GetUserFollowListRequest
-		// 绑定参数
-		err := c.Bind(&param)
-		//TODO: 这里是不能获取别人的关注列表, 但是 是否可以 真正获取别人的关注列表呢?
-		if err != nil || curUserId != param.UserId.UserId {
-			handlers.SendResponse(c, errno.ParamErr)
-			c.Abort()
-			return
-		}
-		// rpc
-		req := &userPb.GetFollowListRequest{
-			Id: param.UserId.UserId,
-		}
-		list, err := rpc.GetFollowList(ctx, req)
-		if err != nil {
-			handlers.SendResponse(c, err)
-			c.Abort()
-			return
-		}
-		SendUserListResponse(c, handlers.PackUsers(list))
-	}
-}
-func Follow(parse func(ctx context.Context, c *app.RequestContext) (jwt2.MapClaims, error)) func(ctx context.Context,
+func (s *Service) Follow() func(ctx context.Context,
 	c *app.RequestContext) {
 	return func(ctx context.Context, c *app.RequestContext) {
-		curUserId := getTokenUserId(ctx, c, parse)
+		var (
+			param ActionRequest
+			req   *userPb.FollowRequest
+			err   error
+		)
+		curUserId := getTokenUserId(ctx, c, s.parseToken)
 		if curUserId == -1 {
-			return
+			goto errHandler
 		}
 		// token 检验成功
-		// 判断 token 中的 Id 是否是自己
-		var param ActionRequest
 		// 绑定参数
-		err := c.Bind(&param)
+		err = c.Bind(&param)
 		// 当前用户不能关注自己
 		if err != nil || curUserId == param.UserId {
 			handlers.SendResponse(c, errno.ParamErr)
-			c.Abort()
-			return
+			goto errHandler
 		}
 		// 发送绑定请求
-		var req = &userPb.FollowRequest{
+		req = &userPb.FollowRequest{
 			FromUserId: curUserId,
 			ToUserId:   param.UserId,
 		}
@@ -97,12 +122,14 @@ func Follow(parse func(ctx context.Context, c *app.RequestContext) (jwt2.MapClai
 		} else {
 			err = rpc.UnFollowUser(ctx, req)
 		}
-		if err != nil {
+		if err != nil { // remote  network error
 			handlers.SendResponse(c, err)
-			c.Abort()
-			return
+			goto errHandler
 		}
 		handlers.SendResponse(c, errno.Success)
+	errHandler:
+		c.Abort()
+		return
 	}
 }
 
