@@ -85,6 +85,15 @@ func QueryUserByName(ctx context.Context, userName string) (*User, error) {
 	return &res, nil
 }
 
+// QueryUserByNamePwd query  user info by UserName
+func QueryUserByNamePwd(ctx context.Context, userName, passWord string) (*User, error) {
+	var res User
+	if err := DB.WithContext(ctx).Where("username = ? and password = ?", userName, passWord).First(&res).Error; err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 // QueryUserById query  user info by UserName
 func QueryUserById(ctx context.Context, id int64, followId int64) (*User, error) {
 	var user *User

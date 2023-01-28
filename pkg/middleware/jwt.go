@@ -1,26 +1,25 @@
 package middleware
 
 import (
-	"context"
 	"first/pkg/constants"
 	"first/pkg/errno"
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/hertz-contrib/jwt"
+	"first/service/api/handlers"
+	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
 )
 
-func JwtMiddle() *jwt.HertzJWTMiddleware {
-	authMiddleware, err := jwt.New(&jwt.HertzJWTMiddleware{
+func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
+	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:            "test zone",
 		Key:              []byte(constants.SecretKey),
 		Timeout:          time.Hour,
 		MaxRefresh:       time.Hour,
 		IdentityKey:      constants.IdentityKey,
 		SigningAlgorithm: "RS256",
-		PubKeyBytes:      constants.PublicKeyFile,
-		PrivKeyBytes:     constants.PrivateKeyFile,
+		Authorizator:     nil,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(int64); ok {
 				return jwt.MapClaims{
@@ -29,28 +28,29 @@ func JwtMiddle() *jwt.HertzJWTMiddleware {
 			}
 			return jwt.MapClaims{}
 		},
-		LoginResponse: func(ctx context.Context, c *app.RequestContext, code int, token string, expire time.Time) {
+		LoginResponse: func(c *gin.Context, code int, message string, time time.Time) {
 			c.JSON(http.StatusOK, map[string]interface{}{
-				"code":    http.StatusOK,
+				"code":    code,
 				"user_id": c.MustGet(constants.IdentityKey).(int64), // Authenticator 会先处理没有 uuid 的情况
-				"token":   token,
-				"expire":  expire.Format(time.RFC3339),
+				"token":   message,
 			})
 		},
-		Unauthorized: func(ctx context.Context, c *app.RequestContext, code int, message string) {
+		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, map[string]interface{}{
 				"code":    errno.AuthorizationFailedErrCode,
 				"message": message,
 			})
 		},
-		Authenticator: func(ctx context.Context, c *app.RequestContext) (interface{}, error) {
+		Authenticator: func(c *gin.Context) (interface{}, error) {
 			value, exists := c.Get(constants.IdentityKey)
 			if !exists {
 				return "", jwt.ErrMissingLoginValues
 			}
 			return value, nil
 		},
-		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
+		PubKeyBytes:   constants.PublicKeyFile,
+		PrivKeyBytes:  constants.PrivateKeyFile,
+		TokenLookup:   "header: Authorization, form: token, cookie: jwt, query: token",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
 	})
@@ -59,8 +59,25 @@ func JwtMiddle() *jwt.HertzJWTMiddleware {
 	}
 	// When you use jwt.New(), the function is already automatically called for checking,
 	// which means you don't need to call it again.
-	if err = authMiddleware.MiddlewareInit(); err != nil {
+	if err = middleware.MiddlewareInit(); err != nil {
 		log.Fatal("JWT Init Error:" + err.Error())
 	}
-	return authMiddleware
+	token := gin.HandlerFunc(func(c *gin.Context) {
+		fromJWT, err := middleware.GetClaimsFromJWT(c)
+		if err != nil {
+			handlers.SendResponse(c, errno.AuthorizationFailedErr)
+			c.Abort()
+			return
+		}
+		var curUserId int64
+		tmp, ok := fromJWT[constants.IdentityKey].(float64)
+		if ok {
+			curUserId = int64(tmp)
+		} else {
+			curUserId = fromJWT[constants.IdentityKey].(int64)
+		}
+		c.Set(constants.IdentityKey, curUserId)
+		c.Next()
+	})
+	return middleware, token
 }

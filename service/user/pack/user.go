@@ -51,8 +51,8 @@ func User(dUser *db.User) *user.User {
 	return &user.User{
 		Id:            dUser.Uuid,
 		UserName:      dUser.UserName,
-		FollowCount:   dUser.FollowerCount,
-		FollowerCount: dUser.FollowCount,
+		FollowCount:   dUser.FollowCount,
+		FollowerCount: dUser.FollowerCount,
 		IsFollow:      dUser.IsFollow,
 	}
 }

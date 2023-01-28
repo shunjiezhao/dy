@@ -3,8 +3,8 @@ package handlers
 import (
 	user "first/kitex_gen/user"
 	"first/pkg/errno"
-	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
@@ -12,10 +12,10 @@ type Response struct {
 	StatusMsg  string `json:"status_msg,omitempty"`
 }
 type Token struct {
-	Token string `json:"token" query:"token"`
+	Token string `json:"token" form:"token"`
 }
 type UserId struct {
-	UserId int64 `json:"user_id" query:"user_id"`
+	UserId int64 `json:"user_id" form:"user_id"`
 }
 
 type User struct {
@@ -35,7 +35,7 @@ func BuildResponse(err error) Response {
 }
 
 // SendResponse pack response
-func SendResponse(c *app.RequestContext, err error) {
+func SendResponse(c *gin.Context, err error) {
 	c.JSON(consts.StatusOK, BuildResponse(err))
 }
 
@@ -50,6 +50,10 @@ func PackUser(u *user.User) *User {
 }
 func PackUsers(u []*user.User) []*User {
 	users := make([]*User, 0)
+	if len(u) == 0 {
+		return users
+	}
+
 	for i := 0; i < len(u); i++ {
 		users = append(users, PackUser(u[i]))
 	}

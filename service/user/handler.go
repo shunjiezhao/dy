@@ -53,7 +53,7 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 	err error) {
 	log.Println("user rpc server: check user")
 	//TODO: 参数检查
-	resp = &user.CheckUserResponse{} // 不要用 new 否则里面的resp 不会初始化
+	resp = &user.CheckUserResponse{} // 使用 new 里面的resp 不会初始化
 	resp.Id, err = service.NewCheckUserService(ctx).CheckUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.AuthorizationFailedErr)

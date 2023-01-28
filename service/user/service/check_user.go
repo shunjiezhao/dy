@@ -18,7 +18,7 @@ func NewCheckUserService(ctx context.Context) *CheckUserService {
 // CheckUser create note info
 func (s *CheckUserService) CheckUser(req *user.CheckUserRequest) (int64, error) {
 	println("rpc 响应开始调用")
-	user, err := db.QueryUserByName(s.ctx, req.UserName)
+	user, err := db.QueryUserByNamePwd(s.ctx, req.UserName, req.PassWord)
 	if err != nil {
 		return 0, err
 	}

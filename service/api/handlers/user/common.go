@@ -3,14 +3,14 @@ package user
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/gin-gonic/gin"
 )
 
 //TODO: 参数检验
 type RegisterRequest struct {
-	UserName string `json:"username" query:"username" `
-	PassWord string `json:"password" query:"password"`
+	UserName string `json:"username" form:"username" `
+	PassWord string `json:"password" form:"password"`
 }
 
 type RegisterResponse struct {
@@ -20,8 +20,8 @@ type RegisterResponse struct {
 }
 
 type LoginRequest struct {
-	UserName string `json:"username"  query:"username"`
-	PassWord string `json:"password" query:"password"`
+	UserName string `json:"username"  form:"username"`
+	PassWord string `json:"password" form:"password"`
 }
 
 type LoginResponse struct {
@@ -35,17 +35,17 @@ type GetInfoRequest struct {
 }
 type GetInfoResponse struct {
 	handlers.Response
-	*handlers.User
+	*handlers.User `json:"user"`
 }
 
-func SendRegisterResponse(c *app.RequestContext, userId int64, token string) {
+func SendRegisterResponse(c *gin.Context, userId int64, token string) {
 	c.JSON(consts.StatusOK, RegisterResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		UserId:   handlers.UserId{UserId: userId},
 		Token:    handlers.Token{Token: token},
 	})
 }
-func SendGetInfoResponse(c *app.RequestContext, user *handlers.User) {
+func SendGetInfoResponse(c *gin.Context, user *handlers.User) {
 	c.JSON(consts.StatusOK, GetInfoResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		User:     user,

@@ -33,6 +33,7 @@ func (s *CreateUserService) CreateUser(req *user.RegisterRequest) (int64, error)
 		Uuid:     ss.NextVal(),
 		UserName: req.UserName,
 		Password: encryptPassWord(req.PassWord),
+		NickName: req.UserName,
 	}
 	return db.CreateUser(s.ctx, userModel)
 }

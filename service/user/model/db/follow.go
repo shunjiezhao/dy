@@ -6,6 +6,7 @@ import (
 	"first/pkg/errno"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"log"
 	"time"
 )
@@ -61,9 +62,9 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 			return err
 		}
 		if add {
-			db = tx.Where(follow).FirstOrCreate(&follow)
+			db = tx.Where(follow).Clauses(clause.OnConflict{DoNothing: true}).FirstOrCreate(&follow)
 		} else {
-			db = tx.Where(follow).Delete(&Follow{})
+			db = tx.Where(follow).Unscoped().Delete(&Follow{})
 		}
 		if err := db.Error; err != nil {
 			log.Println("社交操作: 失败 ", err.Error())
@@ -140,7 +141,7 @@ func getFollowUserHelper(ctx context.Context, fromUserId int64) ([]*User, error)
 	var userList []*User
 	if err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		//1. 查询关注列表
-		db := tx.Order("to_user_uuid DESC").Where("from_user_uuid = ?", fromUserId).Find(&followList)
+		db := tx.Model(&Follow{}).Order("to_user_uuid DESC").Where("from_user_uuid = ?", fromUserId).Find(&followList)
 		err := db.Error
 		if err != nil {
 			return err
@@ -173,11 +174,11 @@ select follower.fansID 'follower_id', if(follow.to_user_uuid is not null, true, 
 from (  
          (select from_user_uuid 'fansID', to_user_uuid  
           from follow_list  
-          where to_user_uuid = %d) follower -- 粉丝  
+          where to_user_uuid = %d and deleted_at is null) follower -- 粉丝  
              left join  
              (select to_user_uuid -- 自己的关注  
               from follow_list  
-              where from_user_uuid = %d) follow  on follow.to_user_uuid  = follower.fansID  -- 关注了自己的粉丝  
+              where from_user_uuid = %d and deleted_at is null) follow  on follow.to_user_uuid  = follower.fansID  -- 关注了自己的粉丝  
          ) order by follower_id desc;
 `
 

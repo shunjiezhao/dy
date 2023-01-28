@@ -27,7 +27,9 @@ CREATE TABLE if not exists dy.user_info
     updated_at     date         NOT NULL,
     deleted_at     date,
     PRIMARY KEY (uuid),
-    UNIQUE KEY (username)
+    UNIQUE KEY (username),
+    check ( follow_count >= 0 ),
+    check ( follower_count >= 0 )
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 

@@ -7,110 +7,136 @@ import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
 	"first/service/api/rpc"
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/kitex/pkg/klog"
-	"github.com/hertz-contrib/jwt"
+	"github.com/gin-gonic/gin"
+	"strconv"
 	"time"
 )
 
 // Register 注册用户
 // @tokenGenerator: 生成 token
 // @RpcRegister: 调用 rpc 返回 userid
-func Register(tokenGenerator func(data interface{}) (string, time.Time, error), RpcRegister func(ctx context.Context, req *userPb.RegisterRequest) (int64, error)) func(ctx context.Context,
-	c *app.RequestContext) {
-	return func(ctx context.Context, c *app.RequestContext) {
-
-		var param RegisterRequest
-		err := c.Bind(&param)
+func Register(tokenGenerator func(data interface{}) (string, time.Time, error),
+	RpcRegister func(ctx context.Context, req *userPb.RegisterRequest) (int64, error)) func(context2 *gin.Context) {
+	return func(c *gin.Context) {
+		var (
+			param  RegisterRequest
+			err    error
+			req    *userPb.RegisterRequest
+			token  string
+			userId int64
+		)
+		err = c.ShouldBindQuery(&param)
 		// 参数校验
 		if err != nil || len(param.UserName) == 0 || len(param.PassWord) == 0 {
-			handlers.SendResponse(c, err)
-			return
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
 		}
 
-		req := userPb.RegisterRequest{
+		req = &userPb.RegisterRequest{
 			UserName: param.UserName,
 			PassWord: param.PassWord,
 		}
 		if RpcRegister == nil {
 			RpcRegister = rpc.Register
 		}
-		userId, err := RpcRegister(ctx, &req) // 方便mock
+		userId, err = RpcRegister(c, req) // 方便mock
 		if err != nil {
 			handlers.SendResponse(c, err)
-			return
+			goto errHandler
+
 		}
-		token, _, err := tokenGenerator(userId)
+		token, _, err = tokenGenerator(userId)
 		if err != nil {
 			handlers.SendResponse(c, err)
-			return
+			goto errHandler
+
 		}
 		SendRegisterResponse(c, userId, token)
+		return
+
+	errHandler:
+		c.Abort()
+
 	}
 }
-func Login() func(ctx context.Context, c *app.RequestContext) {
-	return func(ctx context.Context, c *app.RequestContext) {
-		var loginVar LoginRequest
-		err := c.Bind(&loginVar)
-		if err != nil || len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0 {
-			handlers.SendResponse(c, errno.ParamErr)
-			c.Abort()
-			return
+func Login() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var (
+			loginVar LoginRequest
+			err      error
+			req      *userPb.CheckUserRequest
+			Uuid     int64
+		)
+		notValid := func() bool {
+			return len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0
 		}
-		req := &userPb.CheckUserRequest{
+		err = c.ShouldBindQuery(&loginVar)
+		if err != nil || notValid() {
+			loginVar.UserName = c.Query("username")
+			loginVar.PassWord = c.Query("password")
+			if notValid() {
+				handlers.SendResponse(c, errno.ParamErr)
+				goto errHandler
+			}
+
+		}
+
+		req = &userPb.CheckUserRequest{
 			UserName: loginVar.UserName,
 			PassWord: loginVar.PassWord,
 		}
-		Uuid, err := rpc.CheckUser(ctx, req)
+
+		Uuid, err = rpc.CheckUser(c, req)
 		if err != nil {
 			handlers.SendResponse(c, errno.AuthorizationFailedErr)
-			c.Abort()
-			return
+			goto errHandler
+
 		}
-		klog.Infof("set success")
+
 		c.Set(constants.IdentityKey, Uuid)
+		return
+	errHandler:
+		c.Abort()
 	}
 }
 
-// 得到里面的 user_id
-func checkToken(jwt *jwt.HertzJWTMiddleware, ctx context.Context, c *app.RequestContext) (int64, error) {
-	// 检查token
-	fromJWT, err := jwt.GetClaimsFromJWT(ctx, c)
-	if err != nil {
-		return 0, errno.ParamErr
-	}
-	userId, ok := fromJWT[constants.IdentityKey]
-	if !ok { // token 中没有 user_id 不合法
-		return 0, errno.AuthorizationFailedErr
-	}
-	// 这里并不知道为什么 传递的是 int64 但是 存放的是 float64
-	id, ok := userId.(float64) // 断言失败
-	if !ok {
-		return 0, errno.ParamErr
-	}
-	return int64(id), nil
-}
-func GetInfo(jwt *jwt.HertzJWTMiddleware) func(ctx context.Context, c *app.RequestContext) {
-	return func(ctx context.Context, c *app.RequestContext) {
+func GetInfo() func(c *gin.Context) {
+	return func(c *gin.Context) {
 		// 检查参数
-		var param GetInfoRequest
-		err := c.Bind(&param)
-		if err != nil || param.UserId.UserId <= int64(0) {
+		var (
+			param  GetInfoRequest
+			userID string
+			err    error
+			req    *userPb.GetUserRequest
+			user   *userPb.User
+		)
+		userID = c.Query("user_id")
+		err = c.ShouldBindQuery(&param)
+		if (err != nil || param.UserId.UserId <= int64(0)) && len(userID) == 0 {
 			handlers.SendResponse(c, errno.ParamErr)
-			return
+			goto errHandler
 		}
-		_, err = checkToken(jwt, ctx, c)
-		if err != nil {
-			handlers.SendResponse(c, err)
-			return
+		if len(userID) != 0 && param.UserId.UserId == 0 {
+			param.UserId.UserId, err = strconv.ParseInt(userID, 10, 64)
+			if err != nil {
+				handlers.SendResponse(c, errno.ParamErr)
+				goto errHandler
+			}
+
 		}
+
 		// 发送查询请求
-		req := &userPb.GetUserRequest{Id: param.UserId.UserId}
-		user, err := rpc.GetUserInfo(ctx, req)
+		req = &userPb.GetUserRequest{Id: param.UserId.UserId}
+		user, err = rpc.GetUserInfo(c, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
-			return
+			goto errHandler
+
 		}
 		SendGetInfoResponse(c, handlers.PackUser(user))
+		return
+
+	errHandler:
+		c.Abort()
 	}
 }
