@@ -2,7 +2,6 @@ package main
 
 import (
 	"first/pkg/constants"
-	"first/service/api/handlers/user"
 	"first/service/api/router"
 	"first/service/api/rpc"
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,7 @@ func main() {
 	// If you need a pure hertz, you can use server.New()
 	Init()
 	engine := gin.Default()
-	router.InitRouter(engine, user.New())
+	router.InitRouter(engine)
 
 	engine.Run(constants.ApiServerAddress)
 }

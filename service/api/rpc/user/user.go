@@ -14,6 +14,7 @@ import (
 // userClient rpc client
 var userClient userService.Client
 
+//go:generate mockgen -destination=../mock/male_mock.go -package=mock first/service/api/rpc/user RpcProxyIFace
 type RpcProxyIFace interface {
 	Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error)
 	GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error)
@@ -28,7 +29,7 @@ type RpcProxy struct {
 	userClient userService.Client
 }
 
-func NewUserProxy() *RpcProxy {
+func NewUserProxy() RpcProxyIFace {
 	return &RpcProxy{userClient: userClient}
 }
 

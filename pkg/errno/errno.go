@@ -65,6 +65,10 @@ var (
 // ConvertErr convert error to Errno
 func ConvertErr(err error) ErrNo {
 	Err := ErrNo{}
+	if err == nil {
+		return Success
+	}
+
 	if errors.As(err, &Err) {
 		return Err
 	}

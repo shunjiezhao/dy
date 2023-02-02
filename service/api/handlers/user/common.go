@@ -13,8 +13,11 @@ type Service struct {
 	rpc user.RpcProxyIFace
 }
 
-func New() *Service {
-	return &Service{user.NewUserProxy()}
+func New(rpc user.RpcProxyIFace) *Service {
+	if rpc == nil {
+		rpc = user.NewUserProxy()
+	}
+	return &Service{rpc: rpc}
 }
 
 // User

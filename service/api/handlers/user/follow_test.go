@@ -13,7 +13,7 @@ func TestFollowUser(t *testing.T) {
 	//	3. 关注已关注的人
 	//	4. 取消关注未关注的人
 	//	5. 取消关注已关注的人
-	e := newExpect(t, serverAddr)
+	e, _, _ := newExpect(t, serverAddr)
 	userIda, tokenA := getTestUserToken(testUserA, e)
 	if userIda == 0 || tokenA == "" {
 		t.Fatal("not get token and userid")

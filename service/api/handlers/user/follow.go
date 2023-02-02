@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	userPb "first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/pkg/errno"
@@ -9,7 +10,6 @@ import (
 )
 
 //TODO: 1. 不能获取别人的关注/粉丝列表, 但是可以获取别人的关注/粉丝列表嘛?
-//  	2. 和 user srv 一样 将所有的 rpc 调用抽离开来, 方便mock
 
 func (s *Service) GetFollowerList() func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -19,6 +19,7 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 			param     GetUserFollowerListRequest     //http 请求参数
 			curUserId int64                          //当前用户的 userid
 			list      []*userPb.User                 // 返回的粉丝列表
+			ctx       context.Context                = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
@@ -38,7 +39,7 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 		req = &userPb.GetFollowerListRequest{
 			Id: param.GetUserId(),
 		}
-		list, err = s.rpc.GetFollowerList(c, req)
+		list, err = s.rpc.GetFollowerList(ctx, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
@@ -58,6 +59,7 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 			param     GetUserFollowListRequest     //http 请求参数
 			curUserId int64                        //当前用户的 userid
 			list      []*userPb.User               // 返回的关注列表
+			ctx       context.Context              = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
@@ -78,7 +80,7 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 		req = &userPb.GetFollowListRequest{
 			Id: param.GetUserId(),
 		}
-		list, err = s.rpc.GetFollowList(c, req)
+		list, err = s.rpc.GetFollowList(ctx, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
@@ -95,6 +97,7 @@ func (s *Service) Follow() func(c *gin.Context) {
 			param ActionRequest
 			req   *userPb.FollowRequest
 			err   error
+			ctx   context.Context = c.Request.Context()
 		)
 		curUserId := getTokenUserId(c)
 		if curUserId == -1 {
@@ -117,9 +120,9 @@ func (s *Service) Follow() func(c *gin.Context) {
 			ToUserId:   param.UserId,
 		}
 		if param.IsFollow() {
-			err = s.rpc.FollowUser(c, req)
+			err = s.rpc.FollowUser(ctx, req)
 		} else {
-			err = s.rpc.UnFollowUser(c, req)
+			err = s.rpc.UnFollowUser(ctx, req)
 		}
 		if err != nil { // remote  network error
 			handlers.SendResponse(c, err)

@@ -11,13 +11,11 @@ import (
 	"time"
 )
 
-//TODO: 将user rpc 中用到的接口提取出来, 方便mock
-
 // Register 注册用户
 // @tokenGenerator: 生成 token
 // @RpcRegister: 调用 rpc 返回 userid
 func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.Time, error),
-	RpcRegister func(ctx context.Context, req *userPb.RegisterRequest) (int64, error)) func(context2 *gin.Context) {
+) func(context2 *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			param  RegisterRequest
@@ -25,6 +23,7 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 			req    *userPb.RegisterRequest
 			token  string
 			userId int64
+			ctx    context.Context = c.Request.Context() // 方便 mock gin.Context 不是 context.Context
 		)
 		err = c.ShouldBindQuery(&param)
 		if err != nil {
@@ -40,11 +39,9 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 			UserName: param.UserName,
 			PassWord: param.PassWord,
 		}
-		if RpcRegister == nil {
-			RpcRegister = s.rpc.Register
-		}
-		userId, err = RpcRegister(c, req) // 方便mock
-		if err != nil {
+
+		userId, err = s.rpc.Register(ctx, req) // 方便mock
+		if err != nil || userId <= 0 {
 			handlers.SendResponse(c, err)
 			goto errHandler
 
@@ -70,6 +67,7 @@ func (s *Service) Login() func(c *gin.Context) {
 			err      error
 			req      *userPb.CheckUserRequest
 			Uuid     int64
+			ctx      context.Context = c.Request.Context()
 		)
 		notValid := func() bool {
 			return len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0
@@ -93,8 +91,7 @@ func (s *Service) Login() func(c *gin.Context) {
 			UserName: loginVar.UserName,
 			PassWord: loginVar.PassWord,
 		}
-
-		Uuid, err = s.rpc.CheckUser(c, req)
+		Uuid, err = s.rpc.CheckUser(ctx, req)
 		if Uuid == -1 {
 			handlers.SendResponse(c, errno.AuthorizationFailedErr)
 			goto errHandler
@@ -122,6 +119,7 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 			err      error
 			req      *userPb.GetUserRequest
 			userInfo *userPb.User
+			ctx      context.Context = c.Request.Context()
 		)
 		userID = c.Query("user_id")
 		err = c.ShouldBindQuery(&param)
@@ -144,7 +142,7 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 
 		// 发送查询请求
 		req = &userPb.GetUserRequest{Id: param.GetUserId()}
-		userInfo, err = s.rpc.GetUserInfo(c, req)
+		userInfo, err = s.rpc.GetUserInfo(ctx, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
