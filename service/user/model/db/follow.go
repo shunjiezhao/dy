@@ -62,9 +62,12 @@ func followHelper(ctx context.Context, id int64, followerId int64, add bool, sho
 			return err
 		}
 		if add {
-			db = tx.Where(follow).Clauses(clause.OnConflict{DoNothing: true}).FirstOrCreate(&follow)
+			db = tx.Where(follow).Clauses(clause.OnConflict{
+				DoUpdates: clause.Assignments(map[string]interface{}{"deleted_at": nil}),
+			}).Create(&follow)
+
 		} else {
-			db = tx.Where(follow).Unscoped().Delete(&Follow{})
+			db = tx.Where(follow).Delete(&Follow{})
 		}
 		if err := db.Error; err != nil {
 			log.Println("社交操作: 失败 ", err.Error())

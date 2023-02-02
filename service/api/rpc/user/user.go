@@ -1,4 +1,4 @@
-package rpc
+package user
 
 import (
 	"context"
@@ -11,10 +11,28 @@ import (
 	etcd "github.com/kitex-contrib/registry-etcd"
 )
 
-// userservice rpc client
+// userClient rpc client
 var userClient userService.Client
 
-func initApiUserRpc() {
+type RpcProxyIFace interface {
+	Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error)
+	GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error)
+	CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error)
+	UnFollowUser(ctx context.Context, req *userPb.FollowRequest) error
+	FollowUser(ctx context.Context, req *userPb.FollowRequest) error
+	GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error)
+	GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error)
+}
+
+type RpcProxy struct {
+	userClient userService.Client
+}
+
+func NewUserProxy() *RpcProxy {
+	return &RpcProxy{userClient: userClient}
+}
+
+func InitApiUserRpc() {
 	var err error
 	resolver, err := etcd.NewEtcdResolver([]string{constants.EtcdAddress})
 	if err != nil {
@@ -33,8 +51,8 @@ func initApiUserRpc() {
 }
 
 // Register rpc调用, 如果成功返回 userid
-func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
-	resp, err := userClient.Register(ctx, req)
+func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
+	resp, err := proxy.userClient.Register(ctx, req)
 	if err != nil {
 		return -1, err
 	}
@@ -45,8 +63,8 @@ func Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 }
 
 //CheckUser rpc调用, 检查用户是否存在,如果存在返回 userid
-func CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
-	resp, err := userClient.CheckUser(ctx, req)
+func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
+	resp, err := proxy.userClient.CheckUser(ctx, req)
 	if err != nil {
 		return -1, err
 	}
@@ -56,8 +74,8 @@ func CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error)
 	}
 	return resp.Id, nil
 }
-func GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error) {
-	resp, err := userClient.GetUser(ctx, req)
+func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error) {
+	resp, err := proxy.userClient.GetUser(ctx, req)
 	if err != nil || resp.User == nil {
 		return nil, err
 	}

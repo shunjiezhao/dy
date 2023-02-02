@@ -20,7 +20,7 @@ func (s *CheckUserService) CheckUser(req *user.CheckUserRequest) (int64, error) 
 	println("rpc 响应开始调用")
 	user, err := db.QueryUserByNamePwd(s.ctx, req.UserName, req.PassWord)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	return user.Uuid, err

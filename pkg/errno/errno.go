@@ -29,6 +29,7 @@ const (
 	UserAlreadyFollowErrCode   = 10005
 	RecordNotExistErrCode      = 10006
 	RecordAlreadyExistErrCode  = 10007
+	RemoteErrCode              = 10008
 )
 
 type ErrNo struct {
@@ -58,6 +59,7 @@ var (
 	AuthorizationFailedErr = NewErrNo(AuthorizationFailedErrCode, "Authorization failed")
 	RecordNotExistErr      = NewErrNo(RecordNotExistErrCode, "record not exist")
 	RecordAlreadyExistErr  = NewErrNo(RecordAlreadyExistErrCode, "record already exist")
+	RemoteErr              = NewErrNo(RemoteErrCode, "稍后重试")
 )
 
 // ConvertErr convert error to Errno

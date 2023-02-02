@@ -1,24 +1,15 @@
-package follow
+package user
 
 import (
 	userPb "first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"first/service/api/rpc"
-	jwt2 "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 )
 
-type Service struct {
-	parseToken func(*gin.Context) (jwt2.MapClaims, error)
-}
-
-func New(parse func(*gin.Context) (jwt2.MapClaims, error)) *Service {
-	return &Service{parseToken: parse}
-}
-
 //TODO: 1. 不能获取别人的关注/粉丝列表, 但是可以获取别人的关注/粉丝列表嘛?
+//  	2. 和 user srv 一样 将所有的 rpc 调用抽离开来, 方便mock
 
 func (s *Service) GetFollowerList() func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -29,22 +20,25 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 			curUserId int64                          //当前用户的 userid
 			list      []*userPb.User                 // 返回的粉丝列表
 		)
-		curUserId = getTokenUserId(c, s.parseToken)
+		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
 			goto errHandler
 		}
 		// token 检验成功 开始 绑定参数
-		err = c.Bind(&param)
+		err = c.ShouldBindQuery(&param)
+		if err != nil || param.GetUserId() == 0 || param.GetToken() == "" {
+			err = c.ShouldBind(&param)
+		}
 		//TODO: 1
-		if err != nil || curUserId != param.UserId.UserId {
+		if err != nil || curUserId != param.GetUserId() {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
 		// rpc 调用
 		req = &userPb.GetFollowerListRequest{
-			Id: param.UserId.UserId,
+			Id: param.GetUserId(),
 		}
-		list, err = rpc.GetFollowerList(c, req)
+		list, err = s.rpc.GetFollowerList(c, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
@@ -65,22 +59,26 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 			curUserId int64                        //当前用户的 userid
 			list      []*userPb.User               // 返回的关注列表
 		)
-		curUserId = getTokenUserId(c, s.parseToken)
+		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
 			return
 		}
 		// token 检验成功 开始  绑定参数
 		err = c.ShouldBindQuery(&param)
+		if err != nil || param.GetUserId() == 0 || param.GetToken() == "" {
+			err = c.ShouldBind(&param) // bind form
+		}
+
 		//TODO: 1
-		if err != nil || curUserId != param.UserId.UserId {
+		if err != nil || curUserId != param.GetUserId() {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
 		// rpc
 		req = &userPb.GetFollowListRequest{
-			Id: param.UserId.UserId,
+			Id: param.GetUserId(),
 		}
-		list, err = rpc.GetFollowList(c, req)
+		list, err = s.rpc.GetFollowList(c, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
@@ -98,13 +96,16 @@ func (s *Service) Follow() func(c *gin.Context) {
 			req   *userPb.FollowRequest
 			err   error
 		)
-		curUserId := getTokenUserId(c, s.parseToken)
+		curUserId := getTokenUserId(c)
 		if curUserId == -1 {
 			goto errHandler
 		}
 		// token 检验成功
 		// 绑定参数
 		err = c.ShouldBindQuery(&param)
+		if err != nil || param.UserId == 0 || param.GetToken() == "" {
+			err = c.ShouldBind(&param)
+		}
 		// 当前用户不能关注自己
 		if err != nil || curUserId == param.UserId {
 			handlers.SendResponse(c, errno.ParamErr)
@@ -116,9 +117,9 @@ func (s *Service) Follow() func(c *gin.Context) {
 			ToUserId:   param.UserId,
 		}
 		if param.IsFollow() {
-			err = rpc.FollowUser(c, req)
+			err = s.rpc.FollowUser(c, req)
 		} else {
-			err = rpc.UnFollowUser(c, req)
+			err = s.rpc.UnFollowUser(c, req)
 		}
 		if err != nil { // remote  network error
 			handlers.SendResponse(c, err)
@@ -131,7 +132,7 @@ func (s *Service) Follow() func(c *gin.Context) {
 	}
 }
 
-func getTokenUserId(c *gin.Context, parse func(c *gin.Context) (jwt2.MapClaims, error)) int64 {
+func getTokenUserId(c *gin.Context) int64 {
 	claim := c.MustGet(constants.IdentityKey)
 
 	var curUserId int64

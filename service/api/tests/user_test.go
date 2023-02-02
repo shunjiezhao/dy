@@ -1,4 +1,4 @@
-package tests
+package user
 
 import (
 	"first/pkg/constants"

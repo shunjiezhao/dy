@@ -30,8 +30,8 @@ func main() {
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.UserServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                             // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),
-		server.WithServiceAddr(addr),                                       // address
-		server.WithLimit(&limit.Option{MaxConnections: 1000, MaxQPS: 100}), // limit
+		server.WithServiceAddr(addr),                                         // address
+		server.WithLimit(&limit.Option{MaxConnections: 10000, MaxQPS: 1000}), // limit
 		server.WithRegistry(r))
 
 	err = svr.Run()

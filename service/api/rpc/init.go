@@ -15,7 +15,9 @@
 
 package rpc
 
+import "first/service/api/rpc/user"
+
 // InitRPC init rpc client
 func InitRPC() {
-	initApiUserRpc()
+	user.InitApiUserRpc()
 }

@@ -1,4 +1,4 @@
-package rpc
+package user
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"first/pkg/errno"
 )
 
-func GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error) {
-	resp, err := userClient.GetFollowList(ctx, req)
+func (proxy RpcProxy) GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error) {
+	resp, err := proxy.userClient.GetFollowList(ctx, req)
 	if err != nil || resp.User == nil {
 		return nil, err
 	}
@@ -16,8 +16,8 @@ func GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*us
 	}
 	return resp.User, nil
 }
-func GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error) {
-	resp, err := userClient.GetFollowerList(ctx, req)
+func (proxy RpcProxy) GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error) {
+	resp, err := proxy.userClient.GetFollowerList(ctx, req)
 	if err != nil || resp.User == nil {
 		return nil, err
 	}
@@ -26,8 +26,8 @@ func GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([
 	}
 	return resp.User, nil
 }
-func FollowUser(ctx context.Context, req *userPb.FollowRequest) error {
-	resp, err := userClient.Follow(ctx, req)
+func (proxy RpcProxy) FollowUser(ctx context.Context, req *userPb.FollowRequest) error {
+	resp, err := proxy.userClient.Follow(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -36,8 +36,8 @@ func FollowUser(ctx context.Context, req *userPb.FollowRequest) error {
 	}
 	return nil
 }
-func UnFollowUser(ctx context.Context, req *userPb.FollowRequest) error {
-	resp, err := userClient.UnFollow(ctx, req)
+func (proxy RpcProxy) UnFollowUser(ctx context.Context, req *userPb.FollowRequest) error {
+	resp, err := proxy.userClient.UnFollow(ctx, req)
 	if err != nil {
 		return err
 	}

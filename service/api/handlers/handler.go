@@ -14,8 +14,20 @@ type Response struct {
 type Token struct {
 	Token string `json:"token" form:"token"`
 }
+
+func (t Token) GetToken() string {
+	return t.Token
+}
+
 type UserId struct {
 	UserId int64 `json:"user_id" form:"user_id"`
+}
+
+func (t UserId) GetUserId() int64 {
+	return t.UserId
+}
+func (t UserId) SetUserId(userId int64) {
+	t.UserId = userId
 }
 
 type User struct {

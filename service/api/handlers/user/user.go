@@ -6,16 +6,17 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"first/service/api/rpc"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
 )
 
+//TODO: 将user rpc 中用到的接口提取出来, 方便mock
+
 // Register 注册用户
 // @tokenGenerator: 生成 token
 // @RpcRegister: 调用 rpc 返回 userid
-func Register(tokenGenerator func(data interface{}) (string, time.Time, error),
+func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.Time, error),
 	RpcRegister func(ctx context.Context, req *userPb.RegisterRequest) (int64, error)) func(context2 *gin.Context) {
 	return func(c *gin.Context) {
 		var (
@@ -26,6 +27,9 @@ func Register(tokenGenerator func(data interface{}) (string, time.Time, error),
 			userId int64
 		)
 		err = c.ShouldBindQuery(&param)
+		if err != nil {
+			err = c.ShouldBind(&param)
+		}
 		// 参数校验
 		if err != nil || len(param.UserName) == 0 || len(param.PassWord) == 0 {
 			handlers.SendResponse(c, errno.ParamErr)
@@ -37,7 +41,7 @@ func Register(tokenGenerator func(data interface{}) (string, time.Time, error),
 			PassWord: param.PassWord,
 		}
 		if RpcRegister == nil {
-			RpcRegister = rpc.Register
+			RpcRegister = s.rpc.Register
 		}
 		userId, err = RpcRegister(c, req) // 方便mock
 		if err != nil {
@@ -59,7 +63,7 @@ func Register(tokenGenerator func(data interface{}) (string, time.Time, error),
 
 	}
 }
-func Login() func(c *gin.Context) {
+func (s *Service) Login() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			loginVar LoginRequest
@@ -71,6 +75,10 @@ func Login() func(c *gin.Context) {
 			return len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0
 		}
 		err = c.ShouldBindQuery(&loginVar)
+		if err != nil {
+			err = c.ShouldBind(&loginVar)
+		}
+
 		if err != nil || notValid() {
 			loginVar.UserName = c.Query("username")
 			loginVar.PassWord = c.Query("password")
@@ -86,9 +94,14 @@ func Login() func(c *gin.Context) {
 			PassWord: loginVar.PassWord,
 		}
 
-		Uuid, err = rpc.CheckUser(c, req)
-		if err != nil {
+		Uuid, err = s.rpc.CheckUser(c, req)
+		if Uuid == -1 {
 			handlers.SendResponse(c, errno.AuthorizationFailedErr)
+			goto errHandler
+
+		}
+		if err != nil {
+			handlers.SendResponse(c, errno.ServiceErr)
 			goto errHandler
 
 		}
@@ -100,40 +113,44 @@ func Login() func(c *gin.Context) {
 	}
 }
 
-func GetInfo() func(c *gin.Context) {
+func (s *Service) GetInfo() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// 检查参数
 		var (
-			param  GetInfoRequest
-			userID string
-			err    error
-			req    *userPb.GetUserRequest
-			user   *userPb.User
+			param    GetInfoRequest
+			userID   string
+			err      error
+			req      *userPb.GetUserRequest
+			userInfo *userPb.User
 		)
 		userID = c.Query("user_id")
 		err = c.ShouldBindQuery(&param)
-		if (err != nil || param.UserId.UserId <= int64(0)) && len(userID) == 0 {
+		if err != nil || len(param.GetToken()) == 0 || param.GetUserId() == 0 {
+			err = c.ShouldBind(&param)
+		}
+		if (err != nil || param.GetUserId() <= int64(0)) && len(userID) == 0 {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
-		if len(userID) != 0 && param.UserId.UserId == 0 {
-			param.UserId.UserId, err = strconv.ParseInt(userID, 10, 64)
+
+		if len(userID) != 0 && param.GetUserId() == 0 {
+			id, err := strconv.ParseInt(userID, 10, 64)
 			if err != nil {
 				handlers.SendResponse(c, errno.ParamErr)
 				goto errHandler
 			}
-
+			param.SetUserId(id)
 		}
 
 		// 发送查询请求
-		req = &userPb.GetUserRequest{Id: param.UserId.UserId}
-		user, err = rpc.GetUserInfo(c, req)
+		req = &userPb.GetUserRequest{Id: param.GetUserId()}
+		userInfo, err = s.rpc.GetUserInfo(c, req)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
-		SendGetInfoResponse(c, handlers.PackUser(user))
+		SendGetInfoResponse(c, handlers.PackUser(userInfo))
 		return
 
 	errHandler:
