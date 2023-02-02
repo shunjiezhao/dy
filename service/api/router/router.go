@@ -6,5 +6,5 @@ import (
 )
 
 func InitRouter(engine *gin.Engine) {
-	user.InitRouter(engine, user.New()) // 避免 [import cycle]
+	user.InitRouter(engine, user.New(nil)) // 避免 [import cycle]
 }
