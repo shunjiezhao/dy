@@ -33,8 +33,8 @@ const (
 )
 
 type ErrNo struct {
-	ErrCode int64
-	ErrMsg  string
+	ErrCode int64  `json:"status_code"`
+	ErrMsg  string `json:"status_msg"`
 }
 
 func (e ErrNo) Error() string {
@@ -65,9 +65,6 @@ var (
 // ConvertErr convert error to Errno
 func ConvertErr(err error) ErrNo {
 	Err := ErrNo{}
-	if err == nil {
-		return Success
-	}
 
 	if errors.As(err, &Err) {
 		return Err

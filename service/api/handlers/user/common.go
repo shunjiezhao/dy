@@ -39,6 +39,7 @@ type (
 
 	LoginResponse struct {
 		handlers.Response
+		handlers.UserId
 		Token string `json:"token"`
 	}
 	GetInfoRequest struct {

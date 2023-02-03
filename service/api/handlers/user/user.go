@@ -41,11 +41,18 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 		}
 
 		userId, err = s.rpc.Register(ctx, req) // 方便mock
-		if err != nil || userId <= 0 {
+		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
+
+		if userId <= 0 {
+			handlers.SendResponse(c, errno.ServiceErr)
+			goto errHandler
+
+		}
+
 		token, _, err = tokenGenerator(userId)
 		if err != nil {
 			handlers.SendResponse(c, err)
@@ -98,7 +105,7 @@ func (s *Service) Login() func(c *gin.Context) {
 
 		}
 		if err != nil {
-			handlers.SendResponse(c, errno.ServiceErr)
+			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}

@@ -29,11 +29,16 @@ func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
 			return jwt.MapClaims{}
 		},
 		LoginResponse: func(c *gin.Context, code int, message string, time time.Time) {
-			c.JSON(http.StatusOK, map[string]interface{}{
-				"code":    code,
-				"user_id": c.MustGet(constants.IdentityKey).(int64), // Authenticator 会先处理没有 uuid 的情况
-				"token":   message,
-			})
+			if code == http.StatusOK {
+				c.JSON(http.StatusOK, map[string]interface{}{
+					"status_code": errno.SuccessCode,
+					"user_id":     c.MustGet(constants.IdentityKey).(int64),
+					// Authenticator 会先处理没有 uuid 的情况
+					"token": message,
+				})
+				return
+			}
+			c.JSON(http.StatusOK, errno.AuthorizationFailedErr)
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, map[string]interface{}{

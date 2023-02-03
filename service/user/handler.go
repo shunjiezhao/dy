@@ -65,7 +65,6 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 
 // GetFollowerList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerListRequest) (resp *user.UserListResponse, err error) {
-	// TODO: Your code here...
 	resp = new(user.UserListResponse)
 	resp.User, err = service.NewGetFollowerUserListService(ctx).GetFollowerUserList(req)
 	if err != nil {
@@ -78,7 +77,6 @@ func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFoll
 
 // GetFollowList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowList(ctx context.Context, req *user.GetFollowListRequest) (resp *user.UserListResponse, err error) {
-	// TODO: Your code here...
 	resp = new(user.UserListResponse)
 	resp.User, err = service.NewGetFollowUserListService(ctx).GetFollowUserList(req)
 	if err != nil {
