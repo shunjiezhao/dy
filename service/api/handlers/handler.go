@@ -7,13 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Response struct {
-	StatusCode int64  `json:"status_code"`
-	StatusMsg  string `json:"status_msg,omitempty"`
-}
-type Token struct {
-	Token string `json:"token" form:"token"`
-}
+type (
+	Response struct {
+		StatusCode int64  `json:"status_code"`
+		StatusMsg  string `json:"status_msg,omitempty"`
+	}
+	Token struct {
+		Token string `json:"token" form:"token"`
+	}
+)
 
 func (t Token) GetToken() string {
 	return t.Token
@@ -30,13 +32,24 @@ func (t UserId) SetUserId(userId int64) {
 	t.UserId = userId
 }
 
-type User struct {
-	Id            int64  `json:"id"`
-	Name          string `json:"name"`
-	FollowCount   int64  `json:"follow_count"`
-	FollowerCount int64  `json:"follower_count"`
-	IsFollow      bool   `json:"is_follow"`
-}
+type (
+	User struct {
+		Id            int64  `json:"id"`
+		Name          string `json:"name"`
+		FollowCount   int64  `json:"follow_count"`
+		FollowerCount int64  `json:"follower_count"`
+		IsFollow      bool   `json:"is_follow"`
+	}
+	Video struct {
+		Id            int64  `json:"id,omitempty"`
+		Author        User   `json:"author"`
+		PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
+		CoverUrl      string `json:"cover_url,omitempty"`
+		FavoriteCount int64  `json:"favorite_count,omitempty"`
+		CommentCount  int64  `json:"comment_count,omitempty"`
+		IsFavorite    bool   `json:"is_favorite,omitempty"`
+	}
+)
 
 func BuildResponse(err error) Response {
 	Err := errno.ConvertErr(err)

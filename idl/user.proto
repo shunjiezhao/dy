@@ -50,6 +50,11 @@ message FollowResponse{
   BaseResp resp = 1;
 }
 
+message GetFriendResponse{
+  BaseResp resp = 1;
+  repeated FriendUser user_list = 2;
+}
+
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){};
   rpc CheckUser(CheckUserRequest) returns (CheckUserResponse){};
@@ -62,6 +67,8 @@ service UserService{
   rpc Follow(FollowRequest) returns(FollowResponse){};
 //  取消关注某个用户
   rpc UnFollow(FollowRequest) returns(FollowResponse){};
+// 获取好友列表, 并且获取当前好友的消息
+  rpc GetFriendList(FollowRequest) returns(GetFriendResponse){};
 }
 
 message User{
@@ -70,4 +77,10 @@ message User{
   int64 follow_count = 3;
   int64 follower_count = 4;
   bool is_follow = 5;
+}
+
+message FriendUser {
+ User user = 1;
+ string message = 2;
+ int64 msg_type = 3;
 }

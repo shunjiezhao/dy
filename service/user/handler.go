@@ -12,7 +12,6 @@ import (
 //TODO:
 // 1.对于 string 类型 进行 SQL 注入检查
 // 2.参数检查
-// 3.检查是否该返回用户已存在的错误
 
 // UserServiceImpl implements the last service interface defined in the IDL.
 type UserServiceImpl struct{}
@@ -23,7 +22,6 @@ func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest)
 	resp = new(user.GetUserResponse)
 	resp.User, err = service.NewGetUserService(ctx).GetUser(req)
 	if err != nil {
-		//TODO:检查是否为用户已存在
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
 		return
 	}
@@ -42,7 +40,6 @@ func (s *UserServiceImpl) Register(ctx context.Context, req *user.RegisterReques
 	resp = new(user.RegisterResponse)
 	resp.Id, err = service.NewCreateUserService(ctx).CreateUser(req)
 	if err != nil {
-		//TODO:检查是否为用户已存在
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
 		return
 	}
@@ -90,7 +87,6 @@ func (s *UserServiceImpl) GetFollowList(ctx context.Context, req *user.GetFollow
 // Follow implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Follow(ctx context.Context, req *user.FollowRequest) (resp *user.FollowResponse, err error) {
 	log.Println("user rpc server: follow user")
-	//TODO: 参数检查, to_user_id 是否合法
 	//??? 如果再次关注会怎么样?
 	resp = new(user.FollowResponse)
 	_, err = service.NewFollowUserService(ctx).FollowUser(req)
@@ -115,5 +111,11 @@ func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest)
 		return nil, err
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+// GetFriendList 返回好友列表
+func (s *UserServiceImpl) GetFriendList(ctx context.Context, req *user.FollowRequest) (resp *user.GetFriendResponse, err error) {
+
 	return
 }

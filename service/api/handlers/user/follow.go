@@ -10,7 +10,52 @@ import (
 )
 
 //TODO: 1. 不能获取别人的关注/粉丝列表, 但是可以获取别人的关注/粉丝列表嘛?
+var shouldGetOther = false
 
+func getOther(userId, otherId int64) bool {
+	return !shouldGetOther && userId == otherId
+}
+
+func (s *Service) GetFriendList() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var (
+			err       error
+			req       *userPb.GetFollowerListRequest // rpc 调用参数
+			param     GetUserFollowerListRequest     //http 请求参数
+			curUserId int64                          //当前用户的 userid
+			list      []*userPb.User                 // 返回的粉丝列表
+			ctx       context.Context                = c.Request.Context()
+		)
+		curUserId = getTokenUserId(c)
+		if curUserId == -1 {
+			goto errHandler
+		}
+		// token 检验成功 开始 绑定参数
+		err = c.ShouldBindQuery(&param)
+		if err != nil || param.GetUserId() == 0 || param.GetToken() == "" {
+			err = c.ShouldBind(&param)
+		}
+		//TODO: 1
+		if err != nil || getOther(curUserId, param.GetUserId()) {
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
+		}
+
+		// rpc 调用
+		req = &userPb.GetFollowerListRequest{
+			Id: param.GetUserId(),
+		}
+		list, err = s.rpc.GetFollowerList(ctx, req)
+		if err != nil {
+			handlers.SendResponse(c, err)
+			goto errHandler
+		}
+		SendUserListResponse(c, handlers.PackUsers(list))
+		return
+	errHandler:
+		c.Abort()
+	}
+}
 func (s *Service) GetFollowerList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
@@ -31,7 +76,7 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 		//TODO: 1
-		if err != nil || curUserId != param.GetUserId() {
+		if err != nil || getOther(curUserId, param.GetUserId()) {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
@@ -72,7 +117,7 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 		}
 
 		//TODO: 1
-		if err != nil || curUserId != param.GetUserId() {
+		if err != nil || getOther(curUserId, param.GetUserId()) {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
@@ -110,10 +155,11 @@ func (s *Service) Follow() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 		// 当前用户不能关注自己
-		if err != nil || curUserId == param.UserId {
+		if err != nil || getOther(curUserId, param.UserId) {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
+
 		// 发送绑定请求
 		req = &userPb.FollowRequest{
 			FromUserId: curUserId,
