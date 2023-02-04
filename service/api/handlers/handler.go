@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	user "first/kitex_gen/user"
+	"first/kitex_gen/user"
+	"first/pkg/constants"
 	"first/pkg/errno"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/gin-gonic/gin"
@@ -83,4 +84,16 @@ func PackUsers(u []*user.User) []*User {
 		users = append(users, PackUser(u[i]))
 	}
 	return users
+}
+func GetTokenUserId(c *gin.Context) int64 {
+	claim := c.MustGet(constants.IdentityKey)
+
+	var curUserId int64
+	tmp, ok := claim.(float64)
+	if ok {
+		curUserId = int64(tmp)
+	} else {
+		curUserId = claim.(int64)
+	}
+	return curUserId
 }

@@ -65,7 +65,7 @@ CREATE TABLE if not exists dy.video_info
 (
     video_id        bigint          NOT NULL, # int64
     play_url        varchar(200) NOT NULL COMMENT '视频地址',
-    uuid            int8         NOT NULL COMMENT '用户唯一标识',
+    author_uuid            int8         NOT NULL COMMENT '作者唯一标识',
     cover_url       varchar(200) NOT NULL COMMENT '封面地址',
     title           varchar(100) NOT NULL COMMENT '视频标题',
     favourite_count int          NOT NULL COMMENT '视频点赞数',

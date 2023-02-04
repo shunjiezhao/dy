@@ -1,27 +1,45 @@
 syntax = "proto3";
-option go_package = "user;user";
+option go_package = "video;video";
 
-import "user.proto";
+
+message VideoBaseResp{
+  int64 status_code = 1;
+  string status_msg = 2;
+}
 service VideoService {
-  // 上传文件
+  // 保存用户稿件件相关信息
   rpc Upload(PublishListRequest) returns (PublishListResponse){};
+  rpc GetVideoList(GetVideoListRequest) returns(GetVideoListResponse){};
 }
 
 message PublishListRequest {
-  int64 user_id = 1; // 用户id
-  string token = 2; // 用户鉴权token
+  int64 author = 1; // 用户id
+  string play_url = 2; // 播放地址
+  string cover_url = 3; // 视频封面地址
+  string title = 4; // 视频标题
 }
 
 message PublishListResponse {
-  BaseResp resp = 1;
-  //  int32 status_code = 1; // 状态码，0-成功，其他值-失败
-  //  string status_msg = 2; // 返回状态描述
-  Video video_list = 3; // 用户发布的视频列表
+  VideoBaseResp resp = 1;
+}
+
+message GetVideoListRequest{
+  // get_author = true 为获取该用户
+  int64 author = 1;
+  bool get_author = 2;
+
+  // false 为获取该时间点以后的
+  int64 time_stamp = 3;
+}
+
+message    GetVideoListResponse{
+  VideoBaseResp resp = 1;
+  repeated Video video_list = 3; // 用户发布的视频列表
 }
 
 message Video {
   int64 id = 1; // 视频唯一标识
-  User   author = 2; // 视频作者信息
+  int64 author = 2; // 视频作者信息
   string play_url = 3; // 视频播放地址
   string cover_url = 4; // 视频封面地址
   int64 favorite_count = 5; // 视频的点赞总数

@@ -10,6 +10,10 @@ const (
 	UserTableName   = "user_info"
 	FollowTableName = "follow_list"
 
+	// video service
+	VideoServiceName = "video"
+	VideoTableName   = "video_info"
+
 	//  jwt
 	SecretKey   = "secret key"
 	IdentityKey = "user_id"

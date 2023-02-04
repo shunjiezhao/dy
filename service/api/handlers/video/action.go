@@ -3,9 +3,11 @@ package video
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/storage"
 	"github.com/gin-gonic/gin"
 	"log"
 	"mime/multipart"
+	"time"
 )
 
 const defaultMaxSize int64 = 32 << 20
@@ -14,9 +16,9 @@ func (s *Service) Publish() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err        error
-			act        PublishRequest
+			param      PublishRequest
 			fileHeader *multipart.FileHeader
-			fileInfo   *FileInfo
+			fileInfo   storage.AccessUrl
 		)
 		// 1. 检查文件大小
 		err = c.Request.ParseMultipartForm(defaultMaxSize)
@@ -25,21 +27,14 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 
-		err = c.ShouldBind(&act)
+		err = c.ShouldBind(&param)
 		if err != nil {
 			goto ParamErr
 
 		}
 
-		log.Println("获取到 参数", act)
+		log.Println("获取到 参数", param)
 		//	2. 获取数据 绑定
-
-		err = c.ShouldBind(&act)
-		if err != nil {
-			log.Println("bind body error")
-			return
-
-		}
 
 		fileHeader, err = c.FormFile("data") // 返回第一个
 		if err != nil || fileHeader == nil {
@@ -48,13 +43,14 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 		//	3. 调用储存接口
-		fileInfo, err = s.Storage.UploadFile(fileHeader)
+		s.Storage.UploadFile(param.Title, fileHeader, handlers.GetTokenUserId(c), time.Now())
 		if err != nil {
 			log.Printf("svc.UploadFile err: %v\n", err)
 			handlers.BuildResponse(errno.NewErrNo(errno.ServiceErrCode, err.Error()))
 			goto errHandler
 
 		}
+		//TODO: 保存这个 access url
 
 		log.Println("save file", fileInfo)
 		handlers.BuildResponse(errno.Success)

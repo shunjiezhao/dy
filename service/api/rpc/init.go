@@ -15,9 +15,13 @@
 
 package rpc
 
-import "first/service/api/rpc/user"
+import (
+	"first/service/api/rpc/user"
+	"first/service/api/rpc/video"
+)
 
 // InitRPC init rpc client
 func InitRPC() {
 	user.InitApiUserRpc()
+	video.InitApiVideoRpc()
 }

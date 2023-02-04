@@ -1,6 +1,7 @@
 syntax = "proto3";
 option go_package = "user;user";
 
+
 message BaseResp{
   int64 status_code = 1;
   string status_msg = 2;

@@ -3,26 +3,34 @@ package video
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/storage"
+	"first/service/api/rpc/video"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/gin-gonic/gin"
-	"mime/multipart"
 )
 
-type FileInfo struct {
-	AccessUrl string
-}
+type (
 
-type Storage interface {
-	UploadFile(*multipart.FileHeader) (*FileInfo, error) // 返回我们的 获取链接
-}
+	//Service 用户微服务代理
+	Service struct {
+		storage.Storage
+		video.RpcProxyIFace
+	}
+)
 
-//Service 用户微服务代理
-type Service struct {
-	Storage
-}
+func NewVideo(factory storage.StorageFactory, face video.RpcProxyIFace) *Service {
+	service := Service{}
+	if factory != nil {
+		service.Storage = factory.Factory()
+	}
+	if face != nil {
+		service.RpcProxyIFace = face
+	}
+	if factory == nil || face == nil {
+		return nil
+	}
 
-func NewVideo(storage Storage) *Service {
-	return &Service{storage}
+	return &service
 }
 
 type (
@@ -43,8 +51,11 @@ type (
 	}
 )
 
-func SendRegisterResponse(c *gin.Context) {
+func SendPublishResponse(c *gin.Context, err error) {
+	if err == nil {
+		err = errno.Success
+	}
 	c.JSON(consts.StatusOK, PublishResponse{
-		Response: handlers.BuildResponse(errno.Success),
+		Response: handlers.BuildResponse(err),
 	})
 }
