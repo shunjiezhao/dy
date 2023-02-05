@@ -17,28 +17,8 @@ package db
 
 import (
 	"context"
-	"first/pkg/constants"
-	"time"
-
 	"gorm.io/gorm"
 )
-
-type User struct {
-	Uuid          int64 `gorm:"primarykey, column:uuid"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt `gorm:"index"`
-	UserName      string         `json:"username" gorm:"column:username"`
-	Password      string         `json:"password" gorm:"column:password"`
-	NickName      string         `json:"nickname" gorm:"column:nickname"`
-	FollowCount   int64          `json:"follow_count" gorm:"column:follow_count"`
-	FollowerCount int64          `json:"follower_count" gorm:"column:follower_count"`
-	IsFollow      bool           `json:"is_follow" gorm:"-"`
-}
-
-func (u *User) TableName() string {
-	return constants.UserTableName
-}
 
 // MGetUsers multiple get list of user info order by uuid DESC
 func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, error) {
@@ -67,10 +47,10 @@ func CreateUser(ctx context.Context, users *User) (int64, error) {
 	return users.Uuid, tx.Error
 }
 
-// QueryUsers query list of user info
-func QueryUsers(ctx context.Context, userName string) ([]*User, error) {
+// QueryUsersById query list of user info
+func QueryUsersById(ctx context.Context, uuid []int64) ([]*User, error) {
 	res := make([]*User, 0)
-	if err := DB.WithContext(ctx).Where("username = ?", userName).Find(&res).Error; err != nil {
+	if err := DB.WithContext(ctx).Where("uuid in ?", uuid).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

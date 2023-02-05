@@ -1,32 +1,52 @@
 package main
 
 import (
-	"context"
 	"first/pkg/constants"
-	"github.com/tencentyun/cos-go-sdk-v5"
-	"net/http"
-	"net/url"
-	"os"
+	db2 "first/service/user/model/db"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
-	// 存储桶名称，由 bucketname-appid 组成，appid 必须填入，可以在 COS 控制台查看存储桶名称。 https://console.cloud.tencent.com/cos5/bucket
-	// 替换为用户的 region，存储桶 region 可以在 COS 控制台“存储桶概览”查看 https://console.cloud.tencent.com/ ，关于地域的详情见 https://cloud.tencent.com/document/product/436/6224 。
-	u, _ := url.Parse(constants.OssUrl)
-	b := &cos.BaseURL{BucketURL: u}
-	client := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:  constants.OssSecretID,  // 用户的 SecretId，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参见 https://cloud.tencent.
-			SecretKey: constants.OssSecretKey, // 用户的 SecretKey，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参见 https://cloud.tencent.
+	db, err := gorm.Open(mysql.Open(constants.MySQLDefaultDSN),
+		&gorm.Config{
+			PrepareStmt:            true,
+			SkipDefaultTransaction: true,
 		},
-	})
+	)
+	if err != nil {
+		panic(err.Error())
+	}
 
-	// Case1 使用 Put 上传对象
-	key := "exampleobject"
-	f, err := os.Open("E:\\DY2023\\test.mp4")
-	_, err = client.Object.Put(context.Background(), key, f, nil)
+	db.Migrator().DropTable(&db2.Comment{})
+	err = db.AutoMigrate(&db2.Comment{})
+	db.Create(&db2.Comment{
+		Id:      3,
+		Uuid:    2,
+		VideoId: 2,
+		Content: "CS多少分",
+	})
 	if err != nil {
 		panic(err)
 	}
+	com := &db2.Comment{}
+	db.Debug().Preload("User").Find(&com)
+	fmt.Println(com)
+
+	//db.Create()
 
 }
+
+/*
+
+1. 有用户id的话
+select * from  video
+(
+	select video_id,author_uuid,title,play_url,cover_url,favourite_count,comment_count,
+created_at from video_info order by limit 50
+) t
+
+
+*/

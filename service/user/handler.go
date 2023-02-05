@@ -5,7 +5,10 @@ import (
 	user "first/kitex_gen/user"
 	"first/pkg/errno"
 	"first/service/user/pack"
-	"first/service/user/service"
+	comment "first/service/user/service/comment"
+	"first/service/user/service/follow"
+	user2 "first/service/user/service/user"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"log"
 )
 
@@ -16,14 +19,65 @@ import (
 // UserServiceImpl implements the last service interface defined in the IDL.
 type UserServiceImpl struct{}
 
-func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest) (resp *user.GetUserResponse, err error) {
-	log.Println("user rpc server: get user")
-	//TODO: 参数检查
-	resp = new(user.GetUserResponse)
-	resp.User, err = service.NewGetUserService(ctx).GetUser(req)
+// isAdd 是否是发布评论
+func isAdd(i *user.MessageActionType) bool {
+	if i.Op == 1 {
+		return true
+	}
+	return false
+}
+func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCommentRequest) (resp *user.
+	ActionCommentResponse, err error) {
+	resp = new(user.ActionCommentResponse)
+	if isAdd(req.ActionType) { // 创建
+		err = comment.NewCommentService(ctx).CreateComment(req)
+	} else {
+		err = comment.NewCommentService(ctx).DeleteComment(req)
+	}
+
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
-		return
+		return resp, nil
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+func (s *UserServiceImpl) GetComment(ctx context.Context, req *user.GetCommentRequest) (resp *user.GetCommentResponse, err error) {
+	resp = new(user.GetCommentResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		klog.Infof("[GetComment]: 参数有误")
+		return resp, nil
+
+	}
+	resp.Comment, err = comment.NewCommentService(ctx).GetComment(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
+		return resp, nil
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+func (s *UserServiceImpl) GetUsers(ctx context.Context, req *user.GetUserSRequest) (resp *user.UserListResponse, err error) {
+	resp = new(user.UserListResponse)
+	resp.User, err = user2.NewGetUserService(ctx).GetUserS(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
+		return resp, nil
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest) (resp *user.GetUserResponse, err error) {
+	log.Println("user rpc server: get user")
+	resp = new(user.GetUserResponse)
+	resp.User, err = user2.NewGetUserService(ctx).GetUser(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
+		return resp, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -32,16 +86,15 @@ func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest)
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, req *user.RegisterRequest) (resp *user.RegisterResponse, err error) {
 	log.Println("user rpc server")
-	//TODO: 参数检查
 	if len(req.UserName) == 0 || len(req.PassWord) == 0 {
 		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
 		return
 	}
 	resp = new(user.RegisterResponse)
-	resp.Id, err = service.NewCreateUserService(ctx).CreateUser(req)
+	resp.Id, err = user2.NewCreateUserService(ctx).CreateUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
-		return
+		return resp, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -49,12 +102,11 @@ func (s *UserServiceImpl) Register(ctx context.Context, req *user.RegisterReques
 func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequest) (resp *user.CheckUserResponse,
 	err error) {
 	log.Println("user rpc server: check user")
-	//TODO: 参数检查
 	resp = &user.CheckUserResponse{} // 使用 new 里面的resp 不会初始化
-	resp.Id, err = service.NewCheckUserService(ctx).CheckUser(req)
+	resp.Id, err = user2.NewCheckUserService(ctx).CheckUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.AuthorizationFailedErr)
-		return
+		return resp, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -63,10 +115,10 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 // GetFollowerList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerListRequest) (resp *user.UserListResponse, err error) {
 	resp = new(user.UserListResponse)
-	resp.User, err = service.NewGetFollowerUserListService(ctx).GetFollowerUserList(req)
+	resp.User, err = follow.NewGetFollowerUserListService(ctx).GetFollowerUserList(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
-		return nil, err
+		return nil, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -75,10 +127,10 @@ func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFoll
 // GetFollowList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowList(ctx context.Context, req *user.GetFollowListRequest) (resp *user.UserListResponse, err error) {
 	resp = new(user.UserListResponse)
-	resp.User, err = service.NewGetFollowUserListService(ctx).GetFollowUserList(req)
+	resp.User, err = follow.NewGetFollowUserListService(ctx).GetFollowUserList(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
-		return nil, err
+		return nil, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -89,12 +141,12 @@ func (s *UserServiceImpl) Follow(ctx context.Context, req *user.FollowRequest) (
 	log.Println("user rpc server: follow user")
 	//??? 如果再次关注会怎么样?
 	resp = new(user.FollowResponse)
-	_, err = service.NewFollowUserService(ctx).FollowUser(req)
+	_, err = user2.NewFollowUserService(ctx).FollowUser(req)
 	resp.Resp = pack.BuildBaseResp(err)
 
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
-		return nil, err
+		return nil, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
@@ -105,10 +157,10 @@ func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest)
 	err error) {
 	log.Println("user rpc server: follow user")
 	resp = new(user.FollowResponse)
-	_, err = service.NewUnFollowUserService(ctx).UnFollowUser(req)
+	_, err = user2.NewUnFollowUserService(ctx).UnFollowUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
-		return nil, err
+		return nil, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return

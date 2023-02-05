@@ -3,7 +3,7 @@ package video
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"first/service/api/handlers/storage"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 	"log"
 	"mime/multipart"
@@ -18,7 +18,7 @@ func (s *Service) Publish() func(c *gin.Context) {
 			err        error
 			param      PublishRequest
 			fileHeader *multipart.FileHeader
-			fileInfo   storage.AccessUrl
+			//fileInfo   storage.AccessUrl
 		)
 		// 1. 检查文件大小
 		err = c.Request.ParseMultipartForm(defaultMaxSize)
@@ -33,7 +33,7 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 
-		log.Println("获取到 参数", param)
+		klog.Infof("获取到 参数:%v", param)
 		//	2. 获取数据 绑定
 
 		fileHeader, err = c.FormFile("data") // 返回第一个
@@ -46,18 +46,17 @@ func (s *Service) Publish() func(c *gin.Context) {
 		s.Storage.UploadFile(param.Title, fileHeader, handlers.GetTokenUserId(c), time.Now())
 		if err != nil {
 			log.Printf("svc.UploadFile err: %v\n", err)
-			handlers.BuildResponse(errno.NewErrNo(errno.ServiceErrCode, err.Error()))
+			handlers.SendResponse(c, errno.NewErrNo(errno.ServiceErrCode, err.Error()))
 			goto errHandler
 
 		}
-		//TODO: 保存这个 access url
+		klog.Infof("上传文件成功 参数:%v", param)
 
-		log.Println("save file", fileInfo)
-		handlers.BuildResponse(errno.Success)
+		handlers.SendResponse(c, errno.Success)
 		return
 
 	ParamErr:
-		handlers.BuildResponse(errno.ParamErr)
+		handlers.SendResponse(c, errno.ParamErr)
 	errHandler:
 		c.Abort()
 	}

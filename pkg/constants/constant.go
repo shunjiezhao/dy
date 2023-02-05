@@ -11,8 +11,10 @@ const (
 	FollowTableName = "follow_list"
 
 	// video service
-	VideoServiceName = "video"
-	VideoTableName   = "video_info"
+	VideoServiceName        = "video"
+	VideoTableName          = "video_info"
+	FavouriteVideoTableName = "user_favourite_video"
+	CommentTableName        = "comment_info"
 
 	//  jwt
 	SecretKey   = "secret key"

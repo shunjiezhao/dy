@@ -29,4 +29,12 @@ func InitRouter(engine *gin.Engine, UserService *Service) {
 		relationGroup.GET("/friend/list/", UserService.GetFriendList())
 		relationGroup.POST("/action/", UserService.Follow())
 	}
+
+	// 评论
+	comment := dy.Group("/comment")
+	{
+		comment.Use(jwtToken)
+		comment.GET("/list/", UserService.GetCommentList())
+		comment.GET("/action/", UserService.ActionComment())
+	}
 }

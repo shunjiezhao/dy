@@ -35,6 +35,7 @@ func Init() {
 				SkipDefaultTransaction: true,
 			},
 		)
+		err = DB.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(&Comment{})
 		if err != nil {
 			panic(err)
 		}

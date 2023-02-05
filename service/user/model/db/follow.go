@@ -2,26 +2,12 @@ package db
 
 import (
 	"context"
-	"first/pkg/constants"
 	"first/pkg/errno"
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"log"
-	"time"
 )
-
-type Follow struct {
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
-	FromUserUuid int64          `gorm:"column:from_user_uuid"`
-	ToUserUuid   int64          `gorm:"column:to_user_uuid"`
-}
-
-func (f *Follow) TableName() string {
-	return constants.FollowTableName
-}
 
 // IsFollow 查询是否 followerId 是 id 的粉丝
 func IsFollow(ctx context.Context, id int64, followerId int64) (bool, error) {

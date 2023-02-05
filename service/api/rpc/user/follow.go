@@ -11,7 +11,7 @@ func (proxy RpcProxy) GetFollowList(ctx context.Context, req *userPb.GetFollowLi
 	if err != nil || resp.User == nil {
 		return nil, err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return resp.User, nil
@@ -21,7 +21,7 @@ func (proxy RpcProxy) GetFollowerList(ctx context.Context, req *userPb.GetFollow
 	if err != nil || resp.User == nil {
 		return nil, err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return resp.User, nil
@@ -31,7 +31,7 @@ func (proxy RpcProxy) FollowUser(ctx context.Context, req *userPb.FollowRequest)
 	if err != nil {
 		return err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return nil
@@ -41,7 +41,7 @@ func (proxy RpcProxy) UnFollowUser(ctx context.Context, req *userPb.FollowReques
 	if err != nil {
 		return err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return nil

@@ -23,6 +23,10 @@ type RpcProxyIFace interface {
 	FollowUser(ctx context.Context, req *userPb.FollowRequest) error
 	GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error)
 	GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error)
+	GetUsers(ctx context.Context, Req *userPb.GetUserSRequest) ([]*userPb.User, error)
+
+	ActionComment(ctx context.Context, Req *userPb.ActionCommentRequest) (r *userPb.Comment, err error) //评论操作
+	GetComment(ctx context.Context, Req *userPb.GetCommentRequest) (r []*userPb.Comment, err error)     // 获取评论
 }
 
 type RpcProxy struct {
@@ -50,6 +54,9 @@ func InitApiUserRpc() {
 		panic(err)
 	}
 }
+func respIsErr(Resp *userPb.BaseResp) bool {
+	return Resp != nil && Resp.StatusCode != errno.SuccessCode
+}
 
 // Register rpc调用, 如果成功返回 userid
 func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
@@ -57,7 +64,7 @@ func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest)
 	if err != nil {
 		return 0, err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return resp.Id, nil
@@ -70,7 +77,7 @@ func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserReques
 		return 0, err
 	}
 	// NOTICE: 注意判断, 可能上方用 new 导致 null pointer 异常
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return resp.Id, nil
@@ -80,8 +87,24 @@ func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserReques
 	if err != nil || resp.User == nil {
 		return nil, err
 	}
-	if resp.Resp != nil && resp.Resp.StatusCode != 0 {
+	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
+	return resp.User, nil
+}
+func (proxy RpcProxy) GetUsers(ctx context.Context, Req *userPb.GetUserSRequest) ([]*userPb.User, error) {
+	if len(Req.Id) == 0 {
+		return nil, nil
+	}
+
+	resp, err := proxy.userClient.GetUsers(ctx, Req)
+	if err != nil || resp.User == nil {
+		return nil, err
+	}
+
+	if respIsErr(resp.Resp) {
+		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+	}
+
 	return resp.User, nil
 }

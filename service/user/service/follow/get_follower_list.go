@@ -1,4 +1,4 @@
-package service
+package follow
 
 import (
 	"context"
@@ -25,5 +25,6 @@ func (s *GetFollowerUserListService) GetFollowerUserList(req *user.GetFollowerLi
 		log.Println("获取粉丝列表失败: ", err.Error())
 		return nil, err
 	}
+
 	return pack.Users(list), nil
 }

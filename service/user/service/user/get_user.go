@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"context"
@@ -24,4 +24,14 @@ func (s *GetUserService) GetUser(req *user.GetUserRequest) (*user.User, error) {
 		return nil, err
 	}
 	return pack.User(user), err
+}
+
+// GetUserS create note info
+func (s *GetUserService) GetUserS(req *user.GetUserSRequest) ([]*user.User, error) {
+	println("rpc 响应开始调用")
+	user, err := db.QueryUsersById(s.ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return pack.Users(user), err
 }

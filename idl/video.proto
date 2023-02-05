@@ -10,6 +10,21 @@ service VideoService {
   // 保存用户稿件件相关信息
   rpc Upload(PublishListRequest) returns (PublishListResponse){};
   rpc GetVideoList(GetVideoListRequest) returns(GetVideoListResponse){};
+
+  rpc LikeVideo(LikeVideoRequest) returns (LikeVideoResponse){};
+  rpc GetLikeVideo(GetVideoListRequest) returns (GetVideoListResponse){};
+}
+
+message LikeVideoAction{
+  int32    action_type = 1; // 1- 喜欢 2- 不喜欢
+}
+message LikeVideoRequest{
+  int64 video_id = 1;
+  LikeVideoAction action_type = 2; //
+  int64 uuid = 3; // 那个用户喜欢
+}
+message LikeVideoResponse{
+  VideoBaseResp resp = 1;
 }
 
 message PublishListRequest {
@@ -30,9 +45,12 @@ message GetVideoListRequest{
 
   // false 为获取该时间点以后的
   int64 time_stamp = 3;
+
+
+  int64 uuid = 4;//如果有值 说明是登陆用户
 }
 
-message    GetVideoListResponse{
+message GetVideoListResponse{
   VideoBaseResp resp = 1;
   repeated Video video_list = 3; // 用户发布的视频列表
 }

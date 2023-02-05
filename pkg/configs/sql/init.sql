@@ -17,7 +17,7 @@
 create database if not exists dy;
 CREATE TABLE if not exists dy.user_info
 (
-    uuid           bigint         NOT NULL COMMENT '用户唯一标识',
+    uuid           bigint       NOT NULL COMMENT '用户唯一标识',
     username       varchar(100) NOT NULL comment '用户登陆名',
     password       varchar(200) NOT NULL COMMENT '用户登陆密码',
     follow_count   int DEFAULT 0 COMMENT '用户关注数量',
@@ -38,8 +38,8 @@ CREATE TABLE if not exists dy.follow_list
 (
     from_user_uuid bigint NOT NULL COMMENT '发起关注请求的人',
     to_user_uuid   bigint NOT NULL COMMENT '被关注的人',
-    created_at     date NOT NULL,
-    updated_at     date NOT NULL,
+    created_at     date   NOT NULL,
+    updated_at     date   NOT NULL,
     deleted_at     date,
     UNIQUE KEY (from_user_uuid, to_user_uuid) COMMENT '查询是否关注的时候使用以及用户关注的所有用户列表 (from,to)',
     UNIQUE KEY (to_user_uuid, from_user_uuid) COMMENT '所有关注登录用户的粉丝列表'
@@ -49,13 +49,14 @@ CREATE TABLE if not exists dy.follow_list
 # 用户喜欢的视频表
 CREATE TABLE if not exists dy.user_favourite_video
 (
-    uuid       bigint NOT NULL COMMENT '用户唯一标识',
-    video_id   bigint  NOT NULL,
+    uuid       bigint    NOT NULL COMMENT '用户唯一标识',
+    video_id   bigint    NOT NULL,
     is_like    tinyint DEFAULT 0 COMMENT '喜欢:0, 不喜欢:1',
     created_at timestamp NOT NULL,
     updated_at timestamp NOT NULL,
     deleted_at timestamp,
-    KEY (uuid, video_id, is_like) COMMENT '查询喜欢列表的时候使用 (from,to,0/1)'
+    KEY (uuid, video_id, is_like) COMMENT '查询喜欢列表的时候使用 (from,to,0/1)',
+    UNIQUE KEY (uuid, video_id)
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 
@@ -63,15 +64,15 @@ CREATE TABLE if not exists dy.user_favourite_video
 # 视频信息表
 CREATE TABLE if not exists dy.video_info
 (
-    video_id        bigint          NOT NULL, # int64
+    video_id        bigint       NOT NULL, # int64
     play_url        varchar(200) NOT NULL COMMENT '视频地址',
-    author_uuid            int8         NOT NULL COMMENT '作者唯一标识',
+    author_uuid     int8         NOT NULL COMMENT '作者唯一标识',
     cover_url       varchar(200) NOT NULL COMMENT '封面地址',
     title           varchar(100) NOT NULL COMMENT '视频标题',
     favourite_count int          NOT NULL COMMENT '视频点赞数',
     comment_count   int          NOT NULL COMMENT '视频评论数',
-    created_at      timestamp         NOT NULL,
-    updated_at      timestamp         NOT NULL,
+    created_at      timestamp    NOT NULL,
+    updated_at      timestamp    NOT NULL,
     deleted_at      timestamp,
     PRIMARY KEY (video_id)
 ) ENGINE = InnoDB
@@ -80,10 +81,10 @@ CREATE TABLE if not exists dy.video_info
 # 评论信息表
 CREATE TABLE if not exists dy.comment_info
 (
-    comment_id bigint  NOT NULL COMMENT '评论id,删除的时候使用',
-    uuid       bigint NOT NULL COMMENT '用户唯一标识',
-    video_id   bigint  NOT NULL COMMENT '视频id',
-    content    text NOT NULL COMMENT '评论内容',
+    comment_id bigint    NOT NULL COMMENT '评论id,删除的时候使用',
+    uuid       bigint    NOT NULL COMMENT '用户唯一标识',
+    video_id   bigint    NOT NULL COMMENT '视频id',
+    content    text      NOT NULL COMMENT '评论内容',
     created_at timestamp NOT NULL,
     updated_at timestamp NOT NULL,
     deleted_at timestamp,

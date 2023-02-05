@@ -69,11 +69,11 @@ func SendGetInfoResponse(c *gin.Context, user *handlers.User) {
 // Follow
 
 type (
-	ActionType    int32
-	ActionRequest struct {
+	FollowActionType int32 // 1-关注，2-取消关注
+	ActionRequest    struct {
 		handlers.Token
-		UserId     int64 `json:"to_user_id" form:"to_user_id"`
-		ActionType `json:"action_type" form:"action_type"`
+		UserId           int64 `json:"to_user_id" form:"to_user_id"`
+		FollowActionType `json:"action_type" form:"action_type"`
 	}
 
 	ActionResponse struct {
@@ -99,12 +99,63 @@ type (
 	}
 )
 
-func (a ActionType) IsFollow() bool {
-	return a == 1
+func (f FollowActionType) IsFollow() bool {
+	return f == 1
 }
+
+type (
+	CommentActionType int32 // 1-发布评论，2-删除评论
+
+	// Comment
+
+	CommentActionRequest struct {
+		handlers.Token
+		VideoId           int64 `json:"video_id" form:"video_id"`
+		CommentActionType `json:"action_type" form:"action_type"`
+		CommentText       string `json:"comment_text"form:"comment_text"`
+		CommentId         int64  `json:"comment_id" form:"comment_id"`
+	}
+	CommentActionResponse struct {
+		handlers.Response
+		*handlers.Comment
+	}
+	CommentListRequest struct {
+		VideoId int64 `json:"video_id"`
+		handlers.Token
+	}
+	CommentListResponse struct {
+		CommentList []*handlers.Comment `json:"comment_list"`
+		handlers.Response
+	}
+)
+
+// IsAdd 是否是发布评论
+func (f CommentActionType) IsAdd() bool {
+	return f == 1
+}
+func (f CommentActionType) String() string {
+	if f.IsAdd() {
+		return "添加"
+	}
+	return "删除"
+}
+
+func SendCommentListResponse(c *gin.Context, comments []*handlers.Comment) {
+	c.JSON(consts.StatusOK, CommentListResponse{
+		Response:    handlers.BuildResponse(errno.Success),
+		CommentList: comments,
+	})
+}
+
 func SendUserListResponse(c *gin.Context, users []*handlers.User) {
 	c.JSON(consts.StatusOK, GetUserFollowerListResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		Users:    users,
+	})
+}
+func SendCommentResponse(c *gin.Context, comment *handlers.Comment) {
+	c.JSON(consts.StatusOK, CommentActionResponse{
+		Response: handlers.BuildResponse(errno.Success),
+		Comment:  comment,
 	})
 }

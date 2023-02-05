@@ -131,29 +131,24 @@ func TestFollowUser(t *testing.T) {
 	}{
 		{
 			name: "关注存在的用户",
-			from: 1,
-			to:   2,
+			from: 1, to: 2,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 1, 1: 0},
 				2: [2]int64{0: 0, 1: 1},
 			},
-			isNew: true,
-			op:    FollowUser,
+			isNew: true, op: FollowUser,
 		},
 		{
-			name:      "关注不存在的用户",
-			shouldErr: true,
-			from:      1,
-			to:        0,
+			name: "关注不存在的用户", shouldErr: true,
+			from: 1, to: 0,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 1, 1: 0},
 			},
 			op: FollowUser,
 		},
 		{
-			name:      "取消关注 没关注的",
-			from:      1,
-			to:        3,
+			name: "取消关注 没关注的",
+			from: 1, to: 3,
 			shouldErr: true,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 1, 1: 0},
@@ -163,8 +158,7 @@ func TestFollowUser(t *testing.T) {
 		},
 		{
 			name: "再次关注",
-			from: 1,
-			to:   2,
+			from: 1, to: 2,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 1, 1: 0},
 				2: [2]int64{0: 0, 1: 1},
@@ -174,25 +168,21 @@ func TestFollowUser(t *testing.T) {
 		},
 		{
 			name: "取消关注",
-			from: 1,
-			to:   2,
+			from: 1, to: 2,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 0, 1: 0},
 				2: [2]int64{0: 0, 1: 0},
 			},
-			isNew: true,
-			op:    UnFollowUser,
+			isNew: true, op: UnFollowUser,
 		},
 		{
 			name: "再次取消关注",
-			from: 1,
-			to:   2,
+			from: 1, to: 2,
 			shouldFollowInfo: map[int][2]int64{
 				1: [2]int64{0: 0, 1: 0},
 				2: [2]int64{0: 0, 1: 0},
 			},
-			shouldErr: true,
-			op:        UnFollowUser,
+			shouldErr: true, op: UnFollowUser,
 		},
 	}
 
@@ -230,10 +220,6 @@ func TestFollowUser(t *testing.T) {
 	}
 }
 
-func TestMain(t *testing.M) {
-	//TODO: DOCKER run
-	os.Exit(t.Run())
-}
 func getFollowsHelper(input string) []*Follow {
 	split := strings.Split(input, " ")
 	follows := make([]*Follow, len(split))
@@ -247,4 +233,9 @@ func getFollowsHelper(input string) []*Follow {
 		}
 	}
 	return follows
+}
+
+func TestMain(t *testing.M) {
+	//TODO: DOCKER  RUN
+	os.Exit(t.Run())
 }

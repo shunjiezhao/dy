@@ -32,6 +32,7 @@ const (
 	RemoteErrCode              = 10008
 	PublishVideoErrCode        = 10009
 	GetVideoErrCode            = 10010
+	LikeOpErrCode              = 10011
 )
 
 type ErrNo struct {
@@ -64,6 +65,7 @@ var (
 	RemoteErr              = NewErrNo(RemoteErrCode, "稍后重试")
 	PublishVideoErr        = NewErrNo(PublishVideoErrCode, "上传视频失败")
 	GetVideoErr            = NewErrNo(GetVideoErrCode, "获取视频失败")
+	LikeOpErr              = NewErrNo(LikeOpErrCode, "喜欢操作失败")
 )
 
 // ConvertErr convert error to Errno

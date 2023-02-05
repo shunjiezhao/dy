@@ -3,10 +3,9 @@ package storage
 import (
 	"context"
 	videoPb "first/kitex_gen/video"
-	"first/pkg/logger"
 	video2 "first/service/api/rpc/video"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"go.uber.org/zap"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -56,18 +55,20 @@ func (svc defaultOssStorage) UploadFile(title string, fileHeader *multipart.File
 	_, err = svc.client.Object.Put(ctx, key, open, nil)
 
 	if err != nil {
-		logger.GetLogger().Error("上传文件失败", zap.String("err", err.Error()))
+		klog.Errorf("上传文件失败", err.Error())
 		return
 	}
+
+	playUrl := svc.url + "/" + key
 	err = video2.NewVideoProxy().Upload(ctx, &videoPb.PublishListRequest{
 		Author:  uuid,
-		PlayUrl: svc.url + "/" + key,
+		PlayUrl: playUrl,
 		//TODO: 生成视频截图
-		CoverUrl: "TODO",
+		CoverUrl: playUrl + "?ci-process=snapshot&time=0&format=jpg",
 		Title:    title,
 	})
 	if err != nil {
-		logger.GetLogger().Error("上传文件失败", zap.String("error", err.Error()))
+		klog.Errorf("上传文件失败", err.Error())
 	}
 
 	return
