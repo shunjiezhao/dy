@@ -35,3 +35,13 @@ func (s *GetUserService) GetUserS(req *user.GetUserSRequest) ([]*user.User, erro
 	}
 	return pack.Users(user), err
 }
+
+// GetUserSWithLogin 登陆用户查询需要返回是否关注字段
+func (s *GetUserService) GetUserSWithLogin(req *user.GetUserSRequest) ([]*user.User, error) {
+	println("rpc 响应开始调用")
+	user, err := db.GetUserSLogin(s.ctx, req.Id, req.Uuid)
+	if err != nil {
+		return nil, err
+	}
+	return pack.Users(user), err
+}

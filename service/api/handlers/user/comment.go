@@ -2,9 +2,9 @@ package user
 
 import (
 	"context"
-	userPb "first/kitex_gen/user"
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 )
@@ -13,10 +13,9 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err      error
-			req      *userPb.GetCommentRequest // rpc 调用参数
-			param    CommentListRequest        //http 请求参数
+			param    common.CommentListRequest //http 请求参数
 			ctx      context.Context           = c.Request.Context()
-			comments []*userPb.Comment
+			comments []*handlers.Comment
 		)
 
 		// token 检验成功 开始 绑定参数
@@ -31,18 +30,15 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 		}
 
 		// rpc 调用
-		req = &userPb.GetCommentRequest{
-			VideoId: param.VideoId,
-		}
 
-		comments, err = s.rpc.GetComment(ctx, req)
+		comments, err = s.rpc.GetComment(ctx, &param)
 		if err != nil {
 			klog.Errorf("[获取评论]: 调用[用户服务] 获取评论失败 %v", err.Error())
 			handlers.SendResponse(c, errno.RemoteErr)
 			goto errHandler
 		}
 
-		SendCommentListResponse(c, handlers.PackComments(comments))
+		common.SendCommentListResponse(c, comments)
 		return
 	errHandler:
 		c.Abort()
@@ -53,10 +49,9 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err     error
-			req     *userPb.ActionCommentRequest // rpc 调用参数
-			param   CommentActionRequest         //http 请求参数
-			ctx     context.Context              = c.Request.Context()
-			comment *userPb.Comment
+			param   common.CommentActionRequest //http 请求参数
+			ctx     context.Context             = c.Request.Context()
+			comment *handlers.Comment
 		)
 
 		// token 检验成功 开始 绑定参数
@@ -69,24 +64,20 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
-		klog.Infof("[%d->%d]: %s评论", handlers.GetTokenUserId(c), param.VideoId, param.CommentActionType)
+		param.UserId = getTokenUserId(c)
+
+		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, param.CommentActionType)
 
 		// rpc 调用
-		req = &userPb.ActionCommentRequest{
-			Uuid:        handlers.GetTokenUserId(c),
-			VideoId:     param.VideoId,
-			ActionType:  &userPb.MessageActionType{Op: int32(param.CommentActionType)},
-			CommentText: param.CommentText,
-			CommentId:   param.CommentId,
-		}
-		comment, err = s.rpc.ActionComment(ctx, req)
+
+		comment, err = s.rpc.ActionComment(ctx, &param)
 		if err != nil {
 			klog.Errorf("[评论操作] 调用[用户服务] 获取评论失败 %v", err.Error())
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
 
-		SendCommentResponse(c, handlers.PackComment(comment))
+		common.SendCommentResponse(c, comment)
 		return
 	errHandler:
 		c.Abort()

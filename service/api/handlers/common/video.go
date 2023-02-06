@@ -1,43 +1,18 @@
-package video
+package common
 
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"first/service/api/handlers/storage"
-	"first/service/api/rpc/user"
-	"first/service/api/rpc/video"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/gin-gonic/gin"
 )
-
-type (
-
-	//Service 用户微服务代理
-	Service struct {
-		storage.Storage
-		Video video.RpcProxyIFace
-		User  user.RpcProxyIFace
-	}
-)
-
-func NewVideo(factory storage.StorageFactory, face video.RpcProxyIFace, userFace user.RpcProxyIFace) *Service {
-	if factory == nil || face == nil || userFace == nil {
-		return nil
-	}
-	service := Service{
-		Storage: factory.Factory(),
-		Video:   face,
-		User:    userFace,
-	}
-
-	return &service
-}
 
 type (
 	PublishRequest struct {
 		handlers.Token
 		Title string `json:"title" form:"title"`
 	}
+
 	PublishResponse struct {
 		handlers.Response
 	}
@@ -53,12 +28,20 @@ type (
 	FeedRequest struct {
 		handlers.Token
 		LatestTime int64 `json:"latest_time" form:"latest_time"` // 这个时间点以前的视频 [时间戳]
+
+		Author    int64 // 如果是获取作者的视频列表 GetAuthor = true
+		GetAuthor bool
+		TimeStamp int64 //
+
+		Uuid   int64 // UUid !=0  说明是登陆用户
+		IsLike bool
 	}
 	FeedResponse struct {
 		handlers.Response
 		VideoList []*handlers.Video `json:"video_list"`
 	}
 )
+
 type (
 	VideoFavActionType int32
 	// Favourite

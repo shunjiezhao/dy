@@ -6,6 +6,7 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	user2 "first/service/api/handlers/common/user"
 	"first/service/api/rpc/mock"
 	jwt2 "github.com/appleboy/gin-jwt/v2"
 	"github.com/gavv/httpexpect/v2"
@@ -28,7 +29,7 @@ func getHandler(t *testing.T) (*gin.Engine, *gomock.Controller, *mock.MockRpcPro
 	engine := gin.New()
 	ctrl := gomock.NewController(t) // 需要去关闭
 	face := mock.NewMockRpcProxyIFace(ctrl)
-	service := Service{rpc: face}
+	service := user2.Service{rpc: face}
 	InitRouter(engine, &service)
 
 	return engine, ctrl, face

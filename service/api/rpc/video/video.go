@@ -7,6 +7,9 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	"first/service/api/handlers"
+	"first/service/api/handlers/common"
+	"first/service/api/rpc/video/pack"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/klog"
 	etcd "github.com/kitex-contrib/registry-etcd"
@@ -16,10 +19,10 @@ var videoClient videoservice.Client
 
 //go:generate mockgen -destination=../mock/male_mock.go -package=mock first/service/api/rpc/video RpcProxyIFace
 type RpcProxyIFace interface {
-	Upload(context.Context, *videoPb.PublishListRequest) error
-	GetVideoList(ctx context.Context, Req *videoPb.GetVideoListRequest) ([]*videoPb.Video, error)
-	LikeVideo(ctx context.Context, Req *videoPb.LikeVideoRequest) (err error)
-	GetLikeVideo(ctx context.Context, Req *videoPb.GetVideoListRequest) ([]*videoPb.Video, error)
+	Upload(ctx context.Context, param *videoPb.PublishListRequest) error
+	GetVideoList(ctx context.Context, param *common.FeedRequest) ([]*handlers.Video, error)
+
+	LikeVideo(ctx context.Context, param *videoPb.LikeVideoRequest) (err error)
 }
 
 type RpcProxy struct {
@@ -30,13 +33,13 @@ func respIsErr(Resp *videoPb.VideoBaseResp) bool {
 	return Resp != nil && Resp.StatusCode != errno.SuccessCode
 }
 
-func (proxy RpcProxy) LikeVideo(ctx context.Context, Req *videoPb.LikeVideoRequest) (err error) {
-	if Req == nil {
+func (proxy RpcProxy) LikeVideo(ctx context.Context, param *videoPb.LikeVideoRequest) (err error) {
+	if param == nil {
 		klog.Infof("请求参数为nil")
 		return errno.ParamErr
 	}
 
-	resp, err := proxy.videoClient.LikeVideo(ctx, Req)
+	resp, err := proxy.videoClient.LikeVideo(ctx, param)
 	if err != nil {
 		return errno.RemoteErr
 	}
@@ -46,30 +49,13 @@ func (proxy RpcProxy) LikeVideo(ctx context.Context, Req *videoPb.LikeVideoReque
 	return nil
 }
 
-func (proxy RpcProxy) GetLikeVideo(ctx context.Context, Req *videoPb.GetVideoListRequest) ([]*videoPb.Video, error) {
-	if Req == nil {
-		klog.Infof("请求参数为nil")
-		return nil, errno.ParamErr
-	}
-
-	resp, err := proxy.videoClient.GetLikeVideo(ctx, Req)
-	if err != nil {
-		return nil, errno.RemoteErr
-	}
-	if respIsErr(resp.Resp) {
-		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
-	}
-
-	return resp.VideoList, nil
-}
-
-func (proxy RpcProxy) Upload(ctx context.Context, Req *videoPb.PublishListRequest) error {
-	if Req == nil {
+func (proxy RpcProxy) Upload(ctx context.Context, param *videoPb.PublishListRequest) error {
+	if param == nil {
 		klog.Infof("请求参数为nil")
 		return errno.ParamErr
 	}
 
-	resp, err := proxy.videoClient.Upload(ctx, Req)
+	resp, err := proxy.videoClient.Upload(ctx, param)
 	if err != nil {
 		return errno.RemoteErr
 	}
@@ -80,20 +66,31 @@ func (proxy RpcProxy) Upload(ctx context.Context, Req *videoPb.PublishListReques
 	return nil
 }
 
-func (proxy RpcProxy) GetVideoList(ctx context.Context, Req *videoPb.GetVideoListRequest) ([]*videoPb.Video, error) {
-	if Req == nil {
+func (proxy RpcProxy) GetVideoList(ctx context.Context, param *common.FeedRequest) ([]*handlers.Video, error) {
+	if param == nil {
 		klog.Infof("请求参数为nil")
 		return nil, errno.ParamErr
 	}
+	var req videoPb.GetVideoListRequest
 
-	resp, err := proxy.videoClient.GetVideoList(ctx, Req)
+	if param.GetAuthor {
+		req.GetAuthor_ = true
+		req.Author = param.Author
+	} else if param.Uuid == 0 {
+		req.TimeStamp = param.TimeStamp // 获取当前点之后的
+	} else {
+		req.Uuid = param.Uuid
+		req.IsLike = param.IsLike
+	}
+
+	resp, err := proxy.videoClient.GetVideoList(ctx, &req)
 	if err != nil {
 		return nil, errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
-	return resp.VideoList, nil
+	return pack.Videos(resp.VideoList), nil
 }
 
 func NewVideoProxy() RpcProxyIFace {

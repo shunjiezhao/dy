@@ -2,8 +2,28 @@ package user
 
 import (
 	"first/pkg/middleware"
+	user2 "first/service/api/rpc/user"
 	"github.com/gin-gonic/gin"
 )
+
+//Service 用户微服务代理
+type Service struct {
+	rpc     user2.RpcProxyIFace
+	chatSrv user2.ChatProxy
+}
+
+func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
+	if rpc == nil {
+		rpc = user2.NewUserProxy()
+	}
+	if charSrv == nil {
+		charSrv = user2.NewChatRpcProxy()
+	}
+	return &Service{
+		rpc:     rpc,
+		chatSrv: charSrv,
+	}
+}
 
 func InitRouter(engine *gin.Engine, UserService *Service) {
 

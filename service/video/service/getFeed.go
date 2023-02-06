@@ -24,6 +24,7 @@ func NewFeedsService(ctx context.Context) *FeedsService {
 
 // FeedsItem 返回视频列表, 前提是没有用户id,也就是不需要查询是否喜欢
 func (s *FeedsService) FeedsItem(req *video.GetVideoListRequest) ([]*video.Video, error) {
+
 	videos, err := db.GetVideosAfterTime(s.ctx, req.TimeStamp, 30)
 	if err != nil {
 		klog.Infof("[DB]: 得到 Feeds 流失败; err: %v", err.Error())

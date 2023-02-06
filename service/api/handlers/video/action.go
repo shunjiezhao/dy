@@ -3,6 +3,7 @@ package video
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 	"mime/multipart"
@@ -15,7 +16,7 @@ func (s *Service) Publish() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err        error
-			param      PublishRequest
+			param      common.PublishRequest
 			fileHeader *multipart.FileHeader
 			//fileInfo   storage.AccessUrl
 		)
@@ -50,7 +51,6 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 		klog.Info("[发布视频]: 	成功")
-
 		handlers.SendResponse(c, errno.Success)
 		return
 

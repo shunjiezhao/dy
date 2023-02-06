@@ -31,7 +31,7 @@ type (
 		NickName      string `json:"nickname" gorm:"column:nickname"`
 		FollowCount   int64  `json:"follow_count" gorm:"column:follow_count"`
 		FollowerCount int64  `json:"follower_count" gorm:"column:follower_count"`
-		IsFollow      bool   `json:"is_follow" gorm:"-"`
+		IsFollow      bool   `json:"is_follow" gorm:"is_follow"`
 	}
 	//Follow 关注信息表
 	Follow struct {

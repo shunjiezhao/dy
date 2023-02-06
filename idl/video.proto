@@ -12,7 +12,6 @@ service VideoService {
   rpc GetVideoList(GetVideoListRequest) returns(GetVideoListResponse){};
 
   rpc LikeVideo(LikeVideoRequest) returns (LikeVideoResponse){};
-  rpc GetLikeVideo(GetVideoListRequest) returns (GetVideoListResponse){};
 }
 
 message LikeVideoAction{
@@ -38,8 +37,8 @@ message PublishListResponse {
   VideoBaseResp resp = 1;
 }
 
-message GetVideoListRequest{
   // get_author = true 为获取该用户
+message GetVideoListRequest{
   int64 author = 1;
   bool get_author = 2;
 
@@ -48,6 +47,8 @@ message GetVideoListRequest{
 
 
   int64 uuid = 4;//如果有值 说明是登陆用户
+
+  bool is_like = 5; // 如果有 uuid 且 IsLike = true 说明获取喜欢列表
 }
 
 message GetVideoListResponse{

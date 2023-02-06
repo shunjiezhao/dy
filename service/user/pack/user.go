@@ -5,6 +5,7 @@ import (
 	user "first/kitex_gen/user"
 	"first/pkg/errno"
 	"first/service/user/model/db"
+	"github.com/cloudwego/kitex/pkg/klog"
 )
 
 // BuildBaseResp build baseResp from error
@@ -26,9 +27,10 @@ func baseResp(err errno.ErrNo) *user.BaseResp {
 }
 
 func Users(dUsers []*db.User) []*user.User {
-	users := make([]*user.User, 0)
+	users := make([]*user.User, len(dUsers))
 	for i := 0; i < len(dUsers); i++ {
-		users = append(users, User(dUsers[i]))
+		users[i] = User(dUsers[i])
+		klog.Infof("获取到信息, %#v", users[i])
 	}
 	return users
 }

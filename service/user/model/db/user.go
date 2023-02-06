@@ -17,8 +17,21 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"gorm.io/gorm"
+	"strconv"
+	"strings"
+	"sync"
 )
+
+var pool sync.Pool
+
+func init() {
+	pool = sync.Pool{New: func() any {
+		return &strings.Builder{}
+	}}
+}
 
 // MGetUsers multiple get list of user info order by uuid DESC
 func MGetUsers(db *gorm.DB, ctx context.Context, userIDs []int64) ([]*User, error) {
@@ -104,4 +117,41 @@ func getUserHelper(db *gorm.DB, id int64) (*User, error) {
 		return nil, err
 	}
 	return &res, nil
+}
+
+var getUserSLoginSql = `
+select  l.uuid as 'uuid', l.username as 'username',  l.follow_count as 'follow_count', 
+l.follower_count as 'follower_count', l.nickname as 'nickname',
+      if(r.to_user_uuid is not null or uuid = %d,true,false)  'is_follow'
+from (
+	  select uuid, username,  follow_count, follower_count, nickname
+	  from user_info where  uuid in (%s)
+) l 
+left join 
+(select to_user_uuid from follow_list where from_user_uuid = %d) r 
+on  l.uuid = r.to_user_uuid;
+`
+
+func GetUserSLogin(ctx context.Context, id []int64, uuid int64) ([]*User, error) {
+	if len(id) == 0 {
+		return nil, nil
+	}
+
+	builder := pool.Get().(*strings.Builder)
+	builder.WriteString(strconv.FormatInt(id[0], 10))
+	for i := 1; i < len(id); i++ {
+		builder.WriteString("," + strconv.FormatInt(id[i], 10)) // 1, 2, 3
+		// 避免判断
+	}
+	// 1, 2, 3,
+	klog.Infof("得到id %s", builder.String())
+
+	var res []*User
+	sql := fmt.Sprintf(getUserSLoginSql, uuid, builder.String(), uuid)
+	err := DB.WithContext(ctx).Raw(sql).Scan(&res).Error
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+
 }

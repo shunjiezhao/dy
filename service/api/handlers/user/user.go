@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
-	userPb "first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -18,9 +18,8 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 ) func(context2 *gin.Context) {
 	return func(c *gin.Context) {
 		var (
-			param  RegisterRequest
+			param  common.RegisterRequest
 			err    error
-			req    *userPb.RegisterRequest
 			token  string
 			userId int64
 			ctx    context.Context = c.Request.Context() // 方便 mock gin.Context 不是 context.Context
@@ -35,12 +34,7 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 			goto errHandler
 		}
 
-		req = &userPb.RegisterRequest{
-			UserName: param.UserName,
-			PassWord: param.PassWord,
-		}
-
-		userId, err = s.rpc.Register(ctx, req) // 方便mock
+		userId, err = s.rpc.Register(ctx, &param) // 方便mock
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
@@ -59,34 +53,32 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 			goto errHandler
 
 		}
-		SendRegisterResponse(c, userId, token)
+		common.SendRegisterResponse(c, userId, token)
 		return
 
 	errHandler:
 		c.Abort()
-
 	}
 }
 func (s *Service) Login() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
-			loginVar LoginRequest
-			err      error
-			req      *userPb.CheckUserRequest
-			Uuid     int64
-			ctx      context.Context = c.Request.Context()
+			param common.LoginRequest
+			err   error
+			Uuid  int64
+			ctx   context.Context = c.Request.Context()
 		)
 		notValid := func() bool {
-			return len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0
+			return len(param.UserName) == 0 || len(param.PassWord) == 0
 		}
-		err = c.ShouldBindQuery(&loginVar)
+		err = c.ShouldBindQuery(&param)
 		if err != nil {
-			err = c.ShouldBind(&loginVar)
+			err = c.ShouldBind(&param)
 		}
 
 		if err != nil || notValid() {
-			loginVar.UserName = c.Query("username")
-			loginVar.PassWord = c.Query("password")
+			param.UserName = c.Query("username")
+			param.PassWord = c.Query("password")
 			if notValid() {
 				handlers.SendResponse(c, errno.ParamErr)
 				goto errHandler
@@ -94,11 +86,7 @@ func (s *Service) Login() func(c *gin.Context) {
 
 		}
 
-		req = &userPb.CheckUserRequest{
-			UserName: loginVar.UserName,
-			PassWord: loginVar.PassWord,
-		}
-		Uuid, err = s.rpc.CheckUser(ctx, req)
+		Uuid, err = s.rpc.CheckUser(ctx, &param)
 		if Uuid == -1 {
 			handlers.SendResponse(c, errno.AuthorizationFailedErr)
 			goto errHandler
@@ -122,11 +110,10 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		// 检查参数
 		var (
-			param    GetInfoRequest
+			param    common.GetInfoRequest
 			userID   string
 			err      error
-			req      *userPb.GetUserRequest
-			userInfo *userPb.User
+			userInfo *handlers.User
 			ctx      context.Context = c.Request.Context()
 		)
 		userID = c.Query("user_id")
@@ -147,19 +134,17 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 		}
 
 		// 发送查询请求
-		req = &userPb.GetUserRequest{Id: param.GetUserId()}
-		userInfo, err = s.rpc.GetUserInfo(ctx, req)
+		userInfo, err = s.rpc.GetUserInfo(ctx, param.UserId)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
 
-		SendGetInfoResponse(c, handlers.PackUser(userInfo))
+		common.SendGetInfoResponse(c, userInfo)
 		return
 	ParamErr:
 		handlers.SendResponse(c, errno.ParamErr)
-
 	errHandler:
 		c.Abort()
 	}

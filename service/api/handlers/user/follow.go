@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
-	userPb "first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 )
@@ -25,11 +25,10 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			req       *userPb.GetFollowListRequest // rpc 调用参数
-			param     GetUserFollowerListRequest   //http 请求参数
-			curUserId int64                        //当前用户的 userid
-			list      []*userPb.User               // 返回的粉丝列表
-			ctx       context.Context              = c.Request.Context()
+			param     common.GetUserFollowListRequest //http 请求参数
+			curUserId int64                           //当前用户的 userid
+			list      []*handlers.User                // 返回的粉丝列表
+			ctx       context.Context                 = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
@@ -49,17 +48,15 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 		}
 
 		// rpc 调用
-		req = &userPb.GetFollowListRequest{
-			Id: param.GetUserId(),
-		}
-		list, err = s.rpc.GetFollowList(ctx, req)
+
+		list, err = s.rpc.GetFollowList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[获取好友列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
 
-		SendUserListResponse(c, handlers.PackUsers(list))
+		common.SendUserListResponse(c, list)
 		return
 	errHandler:
 		c.Abort()
@@ -69,11 +66,10 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			req       *userPb.GetFollowerListRequest // rpc 调用参数
-			param     GetUserFollowerListRequest     //http 请求参数
-			curUserId int64                          //当前用户的 userid
-			list      []*userPb.User                 // 返回的粉丝列表
-			ctx       context.Context                = c.Request.Context()
+			param     common.GetUserFollowerListRequest //http 请求参数
+			curUserId int64                             //当前用户的 userid
+			list      []*handlers.User                  // 返回的粉丝列表
+			ctx       context.Context                   = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
@@ -94,17 +90,15 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 		klog.Infof("[粉丝列表]: 获取 参数 %+v", param)
 
 		// rpc 调用
-		req = &userPb.GetFollowerListRequest{
-			Id: param.GetUserId(),
-		}
-		list, err = s.rpc.GetFollowerList(ctx, req)
+
+		list, err = s.rpc.GetFollowerList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[粉丝列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
-		SendUserListResponse(c, handlers.PackUsers(list))
+		common.SendUserListResponse(c, list)
 		return
 	errHandler:
 		c.Abort()
@@ -115,11 +109,10 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			req       *userPb.GetFollowListRequest // rpc 调用参数
-			param     GetUserFollowListRequest     //http 请求参数
-			curUserId int64                        //当前用户的 userid
-			list      []*userPb.User               // 返回的关注列表
-			ctx       context.Context              = c.Request.Context()
+			param     common.GetUserFollowListRequest //http 请求参数
+			curUserId int64                           //当前用户的 userid
+			list      []*handlers.User                // 返回的关注列表
+			ctx       context.Context                 = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
@@ -141,18 +134,15 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 		klog.Infof("[关注列表]: 获取 参数 %+v", param)
 
 		// rpc
-		req = &userPb.GetFollowListRequest{
-			Id: param.GetUserId(),
-		}
 
-		list, err = s.rpc.GetFollowList(ctx, req)
+		list, err = s.rpc.GetFollowList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[关注列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
-		SendUserListResponse(c, handlers.PackUsers(list))
+		common.SendUserListResponse(c, list)
 		return
 	errHandler:
 		c.Abort()
@@ -161,8 +151,7 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 func (s *Service) Follow() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
-			param ActionRequest
-			req   *userPb.FollowRequest
+			param common.ActionRequest
 			err   error
 			ctx   context.Context = c.Request.Context()
 		)
@@ -174,26 +163,19 @@ func (s *Service) Follow() func(c *gin.Context) {
 		// token 检验成功
 		// 绑定参数
 		err = c.ShouldBindQuery(&param)
-		if err != nil || param.UserId == 0 || param.GetToken() == "" {
+		if err != nil || param.ToUserId == 0 || param.GetToken() == "" {
 			err = c.ShouldBind(&param)
 		}
 		// 当前用户不能关注自己
-		if err != nil || curUserId == param.UserId {
+		if err != nil || curUserId == param.ToUserId {
 			handlers.SendResponse(c, errno.OpSelfErr)
 			goto errHandler
 		}
 		klog.Infof("[关注操作]: 获取 参数 %+v", param)
 
+		param.FromUserId = curUserId
 		// 发送绑定请求
-		req = &userPb.FollowRequest{
-			FromUserId: curUserId,
-			ToUserId:   param.UserId,
-		}
-		if param.IsFollow() {
-			err = s.rpc.FollowUser(ctx, req)
-		} else {
-			err = s.rpc.UnFollowUser(ctx, req)
-		}
+		err = s.rpc.ActionFollow(ctx, &param)
 		if err != nil { // remote  network error
 			klog.Errorf("[关注操作]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)

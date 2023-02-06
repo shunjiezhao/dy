@@ -5,6 +5,7 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -15,8 +16,8 @@ func (s *Service) SendMsg() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			param     ChatActionRequest //http 请求参数
-			ctx       context.Context   = c.Request.Context()
+			param     common.ChatActionRequest //http 请求参数
+			ctx       context.Context          = c.Request.Context()
 			curUserId int64
 			msg       handlers.Message
 		)
@@ -55,7 +56,7 @@ func (s *Service) SendMsg() func(c *gin.Context) {
 
 		}
 
-		SendChatResponse(c, &msg)
+		common.SendChatResponse(c, &msg)
 		return
 	errHandler:
 		c.Abort()
@@ -66,8 +67,8 @@ func (s *Service) GetChatList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			param     ChatListRequest //http 请求参数
-			ctx       context.Context = c.Request.Context()
+			param     common.ChatListRequest //http 请求参数
+			ctx       context.Context        = c.Request.Context()
 			curUserId int64
 			msgs      []*handlers.Message
 		)
@@ -103,7 +104,7 @@ func (s *Service) GetChatList() func(c *gin.Context) {
 		log.Printf("%+v", msgs[0])
 		log.Printf("%#v", msgs[0])
 
-		GetChatListResponse(c, msgs)
+		common.GetChatListResponse(c, msgs)
 		return
 	errHandler:
 		c.Abort()

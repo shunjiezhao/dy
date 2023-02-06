@@ -52,7 +52,7 @@ func (s *LikeService) UnLikeVideo(req *video.LikeVideoRequest) error {
 
 // LikesItem 返回用户喜欢的视频列表
 func (s *LikeService) LikesItem(req *video.GetVideoListRequest) ([]*video.Video, error) {
-	videos, err := db.GetFavVideoAfterTime(s.ctx, req.Author, time.Now().Unix(), 20)
+	videos, err := db.GetFavVideoAfterTime(s.ctx, req.Uuid, time.Now().Unix(), 20)
 	if err != nil {
 		klog.Infof("[Video-DB]: 得到  喜欢列表 失败; err: %v", err.Error())
 		return nil, err

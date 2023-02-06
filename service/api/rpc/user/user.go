@@ -7,6 +7,9 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	"first/service/api/handlers"
+	"first/service/api/handlers/common"
+	pack2 "first/service/api/rpc/user/pack"
 	"github.com/cloudwego/kitex/client"
 	etcd "github.com/kitex-contrib/registry-etcd"
 )
@@ -16,17 +19,19 @@ var userClient userService.Client
 
 //go:generate mockgen -destination=../mock/male_mock.go -package=mock first/service/api/rpc/user RpcProxyIFace
 type RpcProxyIFace interface {
-	Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error)
-	GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error)
-	CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error)
-	UnFollowUser(ctx context.Context, req *userPb.FollowRequest) error
-	FollowUser(ctx context.Context, req *userPb.FollowRequest) error
-	GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error)
-	GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error)
-	GetUsers(ctx context.Context, Req *userPb.GetUserSRequest) ([]*userPb.User, error)
+	Register(ctx context.Context, param *common.RegisterRequest) (int64, error)
+	GetUserInfo(ctx context.Context, userId handlers.UserId) (*handlers.User, error)
+	CheckUser(ctx context.Context, param *common.LoginRequest) (int64, error)
 
-	ActionComment(ctx context.Context, Req *userPb.ActionCommentRequest) (r *userPb.Comment, err error) //评论操作
-	GetComment(ctx context.Context, Req *userPb.GetCommentRequest) (r []*userPb.Comment, err error)     // 获取评论
+	// ActionFollow 关注/取消关注操作
+	ActionFollow(ctx context.Context, param *common.ActionRequest) error
+	GetFollowerList(ctx context.Context, param *common.GetUserFollowerListRequest) ([]*handlers.User, error)
+	GetFollowList(ctx context.Context, param *common.GetUserFollowListRequest) ([]*handlers.User, error)
+
+	GetUsers(ctx context.Context, Req *common.GetUserSRequest) ([]*handlers.User, error)
+
+	ActionComment(ctx context.Context, Req *common.CommentActionRequest) (r *handlers.Comment, err error) //评论操作
+	GetComment(ctx context.Context, Req *common.CommentListRequest) (r []*handlers.Comment, err error)    // 获取评论
 }
 
 type RpcProxy struct {
@@ -59,7 +64,13 @@ func respIsErr(Resp *userPb.BaseResp) bool {
 }
 
 // Register rpc调用, 如果成功返回 userid
-func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
+func (proxy RpcProxy) Register(ctx context.Context, param *common.RegisterRequest) (int64, error) {
+
+	req := &userPb.RegisterRequest{
+		UserName: param.UserName,
+		PassWord: param.PassWord,
+	}
+
 	resp, err := proxy.userClient.Register(ctx, req)
 	if err != nil {
 		return 0, errno.RemoteErr
@@ -71,7 +82,12 @@ func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest)
 }
 
 //CheckUser rpc调用, 检查用户是否存在,如果存在返回 userid
-func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
+func (proxy RpcProxy) CheckUser(ctx context.Context, param *common.LoginRequest) (int64, error) {
+
+	req := &userPb.CheckUserRequest{
+		UserName: param.UserName,
+		PassWord: param.PassWord,
+	}
 	resp, err := proxy.userClient.CheckUser(ctx, req)
 	if err != nil {
 		return 0, errno.RemoteErr
@@ -82,7 +98,9 @@ func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserReques
 	}
 	return resp.Id, nil
 }
-func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error) {
+func (proxy RpcProxy) GetUserInfo(ctx context.Context, userId handlers.UserId) (*handlers.User, error) {
+	req := &userPb.GetUserRequest{Id: userId.GetUserId()}
+
 	resp, err := proxy.userClient.GetUser(ctx, req)
 	if err != nil || resp.User == nil {
 		return nil, errno.RemoteErr
@@ -90,14 +108,19 @@ func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserReques
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
-	return resp.User, nil
+	return pack2.User(resp.User), nil
 }
-func (proxy RpcProxy) GetUsers(ctx context.Context, Req *userPb.GetUserSRequest) ([]*userPb.User, error) {
-	if len(Req.Id) == 0 {
+func (proxy RpcProxy) GetUsers(ctx context.Context, param *common.GetUserSRequest) ([]*handlers.User, error) {
+	if len(param.Id) == 0 {
 		return nil, errno.RemoteErr
 	}
 
-	resp, err := proxy.userClient.GetUsers(ctx, Req)
+	req := &userPb.GetUserSRequest{
+		Id:   param.Id,
+		Uuid: param.CurUserId,
+	}
+
+	resp, err := proxy.userClient.GetUsers(ctx, req)
 	if err != nil || resp.User == nil {
 		return nil, errno.RemoteErr
 	}
@@ -106,5 +129,5 @@ func (proxy RpcProxy) GetUsers(ctx context.Context, Req *userPb.GetUserSRequest)
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 
-	return resp.User, nil
+	return pack2.Users(resp.User), nil
 }

@@ -9,6 +9,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type (
+	//Service 用户微服务代理
+	Service struct {
+		storage.Storage
+		Video video2.RpcProxyIFace
+		User  user.RpcProxyIFace
+	}
+)
+
+func NewVideo(factory storage.StorageFactory, face video2.RpcProxyIFace, userFace user.RpcProxyIFace) *Service {
+	if factory == nil || face == nil || userFace == nil {
+		return nil
+	}
+	service := Service{
+		Storage: factory.Factory(),
+		Video:   face,
+		User:    userFace,
+	}
+
+	return &service
+}
+
 func InitRouter(engine *gin.Engine) {
 
 	_, jwtToken := middleware.JwtMiddle()

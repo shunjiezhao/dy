@@ -4,10 +4,17 @@ import (
 	"context"
 	userPb "first/kitex_gen/user"
 	"first/pkg/errno"
+	"first/service/api/handlers"
+	"first/service/api/handlers/common"
+	pack2 "first/service/api/rpc/user/pack"
 	"github.com/cloudwego/kitex/pkg/klog"
 )
 
-func (proxy RpcProxy) GetFollowList(ctx context.Context, req *userPb.GetFollowListRequest) ([]*userPb.User, error) {
+func (proxy RpcProxy) GetFollowList(ctx context.Context, param *common.GetUserFollowListRequest) ([]*handlers.User, error) {
+
+	req := &userPb.GetFollowListRequest{
+		Id: param.GetUserId(),
+	}
 	resp, err := proxy.userClient.GetFollowList(ctx, req)
 	if err != nil || resp.User == nil {
 		klog.Errorf("[UserRpc.GetFollowList]: 失败 :%v", err)
@@ -17,9 +24,13 @@ func (proxy RpcProxy) GetFollowList(ctx context.Context, req *userPb.GetFollowLi
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 
-	return resp.User, nil
+	return pack2.Users(resp.User), nil
 }
-func (proxy RpcProxy) GetFollowerList(ctx context.Context, req *userPb.GetFollowerListRequest) ([]*userPb.User, error) {
+func (proxy RpcProxy) GetFollowerList(ctx context.Context, param *common.GetUserFollowerListRequest) ([]*handlers.User, error) {
+	req := &userPb.GetFollowerListRequest{
+		Id: param.GetUserId(),
+	}
+
 	resp, err := proxy.userClient.GetFollowerList(ctx, req)
 	if err != nil || resp.User == nil {
 		klog.Errorf("[UserRpc.GetFollowerList]: 失败 :%v", err)
@@ -28,23 +39,28 @@ func (proxy RpcProxy) GetFollowerList(ctx context.Context, req *userPb.GetFollow
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
-	return resp.User, nil
+	return pack2.Users(resp.User), nil
 }
-func (proxy RpcProxy) FollowUser(ctx context.Context, req *userPb.FollowRequest) error {
-	resp, err := proxy.userClient.Follow(ctx, req)
-	if err != nil {
-		klog.Errorf("[UserRpc.FollowUser]: 失败 :%v", err)
-		return errno.RemoteErr
+
+func (proxy RpcProxy) ActionFollow(ctx context.Context, param *common.ActionRequest) error {
+	var (
+		resp *userPb.FollowResponse
+		err  error
+	)
+
+	req := &userPb.FollowRequest{
+		FromUserId: param.FromUserId,
+		ToUserId:   param.ToUserId,
 	}
-	if respIsErr(resp.Resp) {
-		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+
+	if param.IsFollow() {
+		resp, err = proxy.userClient.Follow(ctx, req)
+	} else {
+		resp, err = proxy.userClient.UnFollow(ctx, req)
 	}
-	return nil
-}
-func (proxy RpcProxy) UnFollowUser(ctx context.Context, req *userPb.FollowRequest) error {
-	resp, err := proxy.userClient.UnFollow(ctx, req)
+
 	if err != nil {
-		klog.Errorf("[UserRpc.UnFollowUser]: 失败 :%v", err)
+		klog.Errorf("[UserRpc.Action]: 失败 :%v", err)
 		return errno.RemoteErr
 	}
 
@@ -52,4 +68,5 @@ func (proxy RpcProxy) UnFollowUser(ctx context.Context, req *userPb.FollowReques
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return nil
+
 }

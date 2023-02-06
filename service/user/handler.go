@@ -49,14 +49,14 @@ func (c *ChatServiceImpl) GetChatList(ctx context.Context, req *user.GetChatList
 type UserServiceImpl struct{}
 
 // isAdd 是否是发布评论
-func isAdd(i *user.MessageActionType) bool {
-	if i.Op == 1 {
+func isAdd(i int32) bool {
+	if i == 1 {
 		return true
 	}
 	return false
 }
 func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCommentRequest) (resp *user.
-ActionCommentResponse, err error) {
+	ActionCommentResponse, err error) {
 	resp = new(user.ActionCommentResponse)
 	if isAdd(req.ActionType) { // 创建
 		err = comment.NewCommentService(ctx).CreateComment(req)
@@ -91,7 +91,15 @@ func (s *UserServiceImpl) GetComment(ctx context.Context, req *user.GetCommentRe
 
 func (s *UserServiceImpl) GetUsers(ctx context.Context, req *user.GetUserSRequest) (resp *user.UserListResponse, err error) {
 	resp = new(user.UserListResponse)
-	resp.User, err = user2.NewGetUserService(ctx).GetUserS(req)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+	}
+	if req.Uuid == 0 {
+		resp.User, err = user2.NewGetUserService(ctx).GetUserS(req)
+	} else {
+		resp.User, err = user2.NewGetUserService(ctx).GetUserSWithLogin(req) // 登陆用户获取朋友列表, 关注字段
+	}
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
 		return resp, nil

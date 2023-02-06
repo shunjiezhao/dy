@@ -1,31 +1,11 @@
-package user
+package common
 
 import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
-	"first/service/api/rpc/user"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/gin-gonic/gin"
 )
-
-//Service 用户微服务代理
-type Service struct {
-	rpc     user.RpcProxyIFace
-	chatSrv user.ChatProxy
-}
-
-func New(rpc user.RpcProxyIFace, charSrv user.ChatProxy) *Service {
-	if rpc == nil {
-		rpc = user.NewUserProxy()
-	}
-	if charSrv == nil {
-		charSrv = user.NewChatRpcProxy()
-	}
-	return &Service{
-		rpc:     rpc,
-		chatSrv: charSrv,
-	}
-}
 
 // User
 //TODO: 参数检验
@@ -57,6 +37,11 @@ type (
 		handlers.Response
 		*handlers.User `json:"user"`
 	}
+
+	GetUserSRequest struct {
+		Id        []int64 `json:"id,omitempty" form:"id"`
+		CurUserId int64
+	}
 )
 
 func SendRegisterResponse(c *gin.Context, userId int64, token string) {
@@ -79,7 +64,8 @@ type (
 	FollowActionType int32 // 1-关注，2-取消关注
 	ActionRequest    struct {
 		handlers.Token
-		UserId           int64 `json:"to_user_id" form:"to_user_id"`
+		FromUserId       int64 `form:"-" json:"-"`
+		ToUserId         int64 `json:"to_user_id" form:"to_user_id"`
 		FollowActionType `json:"action_type" form:"action_type"`
 	}
 
@@ -121,6 +107,7 @@ type (
 		CommentActionType `json:"action_type" form:"action_type"`
 		CommentText       string `json:"comment_text"form:"comment_text"`
 		CommentId         int64  `json:"comment_id" form:"comment_id"`
+		UserId            int64  `json:"-" form:"-"`
 	}
 	CommentActionResponse struct {
 		handlers.Response
@@ -140,6 +127,7 @@ type (
 func (f CommentActionType) IsAdd() bool {
 	return f == 1
 }
+
 func (f CommentActionType) String() string {
 	if f.IsAdd() {
 		return "添加"

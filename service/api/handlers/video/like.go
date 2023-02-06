@@ -1,10 +1,10 @@
 package video
 
 import (
-	userPb "first/kitex_gen/user"
 	videoPb "first/kitex_gen/video"
 	"first/pkg/errno"
 	"first/service/api/handlers"
+	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 )
@@ -14,10 +14,8 @@ func (s *Service) LikeVideo() func(c *gin.Context) {
 		// 1. 检查参数
 		var (
 			err   error
-			param ListRequest
-			list  []*videoPb.Video
-			users []*userPb.User
-			req   *videoPb.GetVideoListRequest
+			param common.ListRequest
+			list  []*handlers.Video
 		)
 
 		err = c.ShouldBind(&param)
@@ -30,18 +28,18 @@ func (s *Service) LikeVideo() func(c *gin.Context) {
 		}
 		klog.Infof("[LikeVideo]: 获取到参数 %#v", param)
 
-		req = &videoPb.GetVideoListRequest{
-			Author:     handlers.GetTokenUserId(c),
-			GetAuthor_: true,
-		}
-		list, users, err = s.GetVideosAndUsers(c, req)
+		list, err = s.GetVideosAndUsers(c, &common.FeedRequest{
+			Uuid:   param.GetUserId(),
+			IsLike: true,
+		}, false)
+
 		if err != nil {
-			handlers.SendResponse(c, errno.ServiceErr)
+			handlers.SendResponse(c, err)
 			goto ErrHandler
 
 		}
 
-		SendVideoListResponse(c, handlers.PackVideos(list, users, false), errno.Success)
+		common.SendVideoListResponse(c, list, errno.Success)
 		return
 	ParamErr:
 		handlers.SendResponse(c, errno.ParamErr)
@@ -54,7 +52,7 @@ func (s *Service) Like() func(c *gin.Context) {
 		// 1. 检查参数
 		var (
 			err   error
-			param FavoriteActionRequest
+			param common.FavoriteActionRequest
 			req   *videoPb.LikeVideoRequest
 		)
 
@@ -75,7 +73,7 @@ func (s *Service) Like() func(c *gin.Context) {
 		}
 		err = s.Video.LikeVideo(c, req)
 		if err != nil {
-			handlers.SendResponse(c, errno.ServiceErr)
+			handlers.SendResponse(c, err)
 			goto ErrHandler
 
 		}
