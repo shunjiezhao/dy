@@ -23,5 +23,6 @@ import (
 // InitRPC init rpc client
 func InitRPC() {
 	user.InitApiUserRpc()
+	user.InitChatRpc()
 	video.InitApiVideoRpc()
 }

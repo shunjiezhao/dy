@@ -87,26 +87,25 @@ message MessageActionType{
   int32 op = 1;
 }
 message ActionCommentRequest{
-  int64 uuid = 1; // 用户鉴权token
+  int64 uuid = 1; // 用户id
   int64 video_id = 2; // 视频id
   MessageActionType action_type = 3; // 1-发布评论，2-删除评论
-   string comment_text = 4; // 用户填写的评论内容，在action_type=1的时候使用
-   int64 comment_id = 5; // 要删除的评论id，在action_type=2的时候使用
+  string comment_text = 4; // 用户填写的评论内容，在action_type=1的时候使用
+  int64 comment_id = 5; // 要删除的评论id，在action_type=2的时候使用
 }
 message ActionCommentResponse{
   BaseResp resp = 1;
-   Comment comment = 3; // 评论成功返回评论内容，不需要重新拉取整个列表
+  Comment comment = 3; // 评论成功返回评论内容，不需要重新拉取整个列表
 }
+
 message GetCommentRequest{
   int64 video_id = 2; // 视频id
 }
+
 message GetCommentResponse{
   BaseResp resp = 1;
   repeated Comment comment = 3; // 评论成功返回评论内容，不需要重新拉取整个列表
 }
-
-
-
 
 message User{
   int64  id = 1;
@@ -127,4 +126,36 @@ message Comment {
   User user = 2; // 评论用户信息
   string content = 3; // 评论内容
   int64 create_date = 4; // 评论发布日期，格式 mm-dd
+}
+
+
+
+// 消息相关
+message SaveMsgRequest{
+  int64 from_user_id = 1;
+  int64 to_user_id = 2;
+  string content = 3;
+  int64 created_at_s = 4; // 单位s
+}
+message SaveMsgResponse{
+  BaseResp resp = 1;
+}
+message GetChatListRequest{
+  int64 from_user_id = 1;
+  int64 to_user_id = 2;
+}
+message GetChatListResponse{
+  BaseResp resp = 1;
+  repeated  Message message_list = 2;
+}
+message Message {
+  int64 from_user_id = 1;
+  int64 to_user_id = 2;
+  string content = 3;
+  int64 created_at_s = 4; // 单位s
+  int64 message_id = 5;
+}
+service ChatService{
+  rpc SendMsg(SaveMsgRequest) returns(SaveMsgResponse){}; //发送消息
+  rpc GetChatList(GetChatListRequest) returns(GetChatListResponse){}; // 获取消息列表
 }

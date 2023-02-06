@@ -57,3 +57,20 @@ func Comments(com []*db.Comment) []*user.Comment {
 	}
 	return res
 }
+func Message(ms *db.Message) *user.Message {
+	return &user.Message{
+		FromUserId: ms.FromUserUuid,
+		ToUserId:   ms.ToUserUuid,
+		Content:    ms.Content,
+		CreatedAtS: ms.CreatedAt.Unix(),
+		MessageId:  ms.Id,
+	}
+}
+
+func Messages(ms []*db.Message) []*user.Message {
+	res := make([]*user.Message, len(ms))
+	for i := 0; i < len(ms); i++ {
+		res[i] = Message(ms[i])
+	}
+	return res
+}

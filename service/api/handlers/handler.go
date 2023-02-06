@@ -18,16 +18,26 @@ type (
 	Token struct {
 		Token string `json:"token" form:"token"`
 	}
+	UserId struct {
+		UserId int64 `json:"user_id" form:"user_id"`
+	}
+	ToUserId struct {
+		UserId int64 `json:"to_user_id" form:"to_user_id"`
+	}
+	FromUserId struct {
+		UserId int64 `json:"from_user_id" form:"from_user_id"`
+	}
 )
 
 func (t Token) GetToken() string {
 	return t.Token
 }
-
-type UserId struct {
-	UserId int64 `json:"user_id" form:"user_id"`
+func (t ToUserId) GetToUserId() int64 {
+	return t.UserId
 }
-
+func (t FromUserId) GetFromUserId() int64 {
+	return t.UserId
+}
 func (t UserId) GetUserId() int64 {
 	return t.UserId
 }
@@ -57,6 +67,14 @@ type (
 		User       *User  `json:"user"`
 		Content    string `json:"content"`
 		CreateDate int64  `json:"create_date"`
+	}
+
+	Message struct {
+		Id int64 `json:"id"` // 消息id
+		ToUserId
+		FromUserId
+		Content    string `json:"content"`     // 消息内容
+		CreateTime string `json:"create_time"` // 消息创建时间
 	}
 )
 

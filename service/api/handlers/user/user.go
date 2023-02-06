@@ -112,6 +112,7 @@ func (s *Service) Login() func(c *gin.Context) {
 
 		c.Set(constants.IdentityKey, Uuid)
 		return
+
 	errHandler:
 		c.Abort()
 	}
@@ -134,15 +135,13 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 		if (err != nil || param.GetUserId() <= int64(0)) && len(userID) == 0 {
-			handlers.SendResponse(c, errno.ParamErr)
-			goto errHandler
+			goto ParamErr
 		}
 
 		if len(userID) != 0 && param.GetUserId() == 0 {
 			id, err := strconv.ParseInt(userID, 10, 64)
 			if err != nil {
-				handlers.SendResponse(c, errno.ParamErr)
-				goto errHandler
+				goto ParamErr
 			}
 			param.SetUserId(id)
 		}
@@ -155,8 +154,11 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 			goto errHandler
 
 		}
+
 		SendGetInfoResponse(c, handlers.PackUser(userInfo))
 		return
+	ParamErr:
+		handlers.SendResponse(c, errno.ParamErr)
 
 	errHandler:
 		c.Abort()

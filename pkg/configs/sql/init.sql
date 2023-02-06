@@ -55,7 +55,7 @@ CREATE TABLE if not exists dy.user_favourite_video
     created_at timestamp NOT NULL,
     updated_at timestamp NOT NULL,
     deleted_at timestamp,
-    KEY (uuid, video_id, is_like) COMMENT '查询喜欢列表的时候使用 (from,to,0/1)',
+    KEY (uuid, video_id) COMMENT '查询喜欢列表的时候使用 (from,to)',
     UNIQUE KEY (uuid, video_id)
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
@@ -92,3 +92,20 @@ CREATE TABLE if not exists dy.comment_info
     KEY (video_id) COMMENT '查询视频评论列表使用'
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
+
+# 评论信息表
+CREATE TABLE if not exists dy.message_info
+(
+    message_id     bigint    not null comment '消息id',
+    from_user_uuid bigint    NOT NULL COMMENT '发起关注请求的人',
+    to_user_uuid   bigint    NOT NULL COMMENT '被关注的人',
+    content        text      NOT NULL COMMENT '消息内容',
+    created_at     timestamp NOT NULL,
+    updated_at     timestamp NOT NULL,
+    deleted_at     timestamp,
+
+    KEY (from_user_uuid, to_user_uuid) COMMENT '查询是否关注的时候使用以及用户关注的所有用户列表 (from,to)',
+    KEY (to_user_uuid, from_user_uuid) COMMENT '所有关注登录用户的粉丝列表'
+) ENGINE = InnoDB
+  DEFAULT charset = utf8mb4;
+

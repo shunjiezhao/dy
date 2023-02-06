@@ -42,7 +42,7 @@ class GenProto:
         self.makedirs(service)
         exist = self.existF(os.path.join(service, "main.go"))
         if exist:
-            cmd += " && rm main.go handler.go"
+            cmd += " && mv main.go handler.go %s/tmp" %(service)
         else:
             cmd += " && mv main.go handler.go %s" % (service)
 

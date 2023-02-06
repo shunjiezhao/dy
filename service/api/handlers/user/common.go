@@ -10,14 +10,21 @@ import (
 
 //Service 用户微服务代理
 type Service struct {
-	rpc user.RpcProxyIFace
+	rpc     user.RpcProxyIFace
+	chatSrv user.ChatProxy
 }
 
-func New(rpc user.RpcProxyIFace) *Service {
+func New(rpc user.RpcProxyIFace, charSrv user.ChatProxy) *Service {
 	if rpc == nil {
 		rpc = user.NewUserProxy()
 	}
-	return &Service{rpc: rpc}
+	if charSrv == nil {
+		charSrv = user.NewChatRpcProxy()
+	}
+	return &Service{
+		rpc:     rpc,
+		chatSrv: charSrv,
+	}
 }
 
 // User
@@ -120,7 +127,7 @@ type (
 		*handlers.Comment
 	}
 	CommentListRequest struct {
-		VideoId int64 `json:"video_id"`
+		VideoId int64 `json:"video_id" form:"video_id"`
 		handlers.Token
 	}
 	CommentListResponse struct {
@@ -140,6 +147,30 @@ func (f CommentActionType) String() string {
 	return "删除"
 }
 
+type (
+	// Chat
+	ChatActionRequest struct {
+		handlers.Token
+		handlers.ToUserId
+		ActionType int32  `json:"action_type" form:"action_type"` // 1-发送消息
+		Content    string `json:"content" form:"content"`
+	}
+	ChatActionResponse struct {
+		handlers.Response
+		*handlers.Message
+	}
+
+	ChatListRequest struct {
+		handlers.Token
+		handlers.ToUserId
+	}
+
+	ChatListResponse struct {
+		handlers.Response
+		MessageList []*handlers.Message `json:"message_list"` // 消息列表
+	}
+)
+
 func SendCommentListResponse(c *gin.Context, comments []*handlers.Comment) {
 	c.JSON(consts.StatusOK, CommentListResponse{
 		Response:    handlers.BuildResponse(errno.Success),
@@ -157,5 +188,18 @@ func SendCommentResponse(c *gin.Context, comment *handlers.Comment) {
 	c.JSON(consts.StatusOK, CommentActionResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		Comment:  comment,
+	})
+}
+func SendChatResponse(c *gin.Context, msg *handlers.Message) {
+	c.JSON(consts.StatusOK, ChatActionResponse{
+		Response: handlers.BuildResponse(errno.Success),
+		Message:  msg,
+	})
+}
+
+func GetChatListResponse(c *gin.Context, msg []*handlers.Message) {
+	c.JSON(consts.StatusOK, ChatListResponse{
+		Response:    handlers.BuildResponse(errno.Success),
+		MessageList: msg,
 	})
 }

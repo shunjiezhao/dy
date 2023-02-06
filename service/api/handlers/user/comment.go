@@ -25,7 +25,7 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 		if err != nil {
-			klog.Errorf("[GetComment] 绑定参数失败 %v", err.Error())
+			klog.Errorf("[获取评论] 绑定参数失败 %v", err.Error())
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
@@ -37,8 +37,8 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 
 		comments, err = s.rpc.GetComment(ctx, req)
 		if err != nil {
-			klog.Errorf("调用[用户服务] 获取评论失败 %v", err.Error())
-			handlers.SendResponse(c, err)
+			klog.Errorf("[获取评论]: 调用[用户服务] 获取评论失败 %v", err.Error())
+			handlers.SendResponse(c, errno.RemoteErr)
 			goto errHandler
 		}
 
@@ -65,7 +65,7 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 		if err != nil {
-			klog.Errorf("[GetComment] 绑定参数失败 %v", err.Error())
+			klog.Errorf("[评论操作]: 绑定参数失败 %v", err.Error())
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
@@ -81,7 +81,7 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 		}
 		comment, err = s.rpc.ActionComment(ctx, req)
 		if err != nil {
-			klog.Errorf("调用[用户服务] 获取评论失败 %v", err.Error())
+			klog.Errorf("[评论操作] 调用[用户服务] 获取评论失败 %v", err.Error())
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}

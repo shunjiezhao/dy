@@ -6,9 +6,11 @@ func init() {
 
 const (
 	// user service
-	UserServiceName = "user"
-	UserTableName   = "user_info"
-	FollowTableName = "follow_list"
+	UserServiceName  = "user"
+	ChatServiceName  = "chat"
+	UserTableName    = "user_info"
+	FollowTableName  = "follow_list"
+	MessageTableName = "message_info"
 
 	// video service
 	VideoServiceName        = "video"
@@ -27,6 +29,8 @@ const (
 	ApiServerAddress  = ":8888"
 	UserServerAddress = "127.0.0.1:8889"
 
+	// FORMAT
+	TimeFormatS        = "2006-01-02 15:04:05"
 	UploadSavePath     = "./static"
 	UploadImageMaxSize = 10
 	UploadServerUrl    = ApiServerAddress

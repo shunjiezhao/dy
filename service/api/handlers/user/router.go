@@ -37,4 +37,10 @@ func InitRouter(engine *gin.Engine, UserService *Service) {
 		comment.GET("/list/", UserService.GetCommentList())
 		comment.GET("/action/", UserService.ActionComment())
 	}
+	message := dy.Group("/message/")
+	{
+		message.Use(jwtToken)
+		message.GET("/chat/", UserService.GetChatList())
+		message.POST("/action/", UserService.SendMsg())
+	}
 }

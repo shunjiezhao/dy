@@ -5,6 +5,7 @@ import (
 	user "first/kitex_gen/user"
 	"first/pkg/errno"
 	"first/service/user/pack"
+	"first/service/user/service/chat"
 	comment "first/service/user/service/comment"
 	"first/service/user/service/follow"
 	user2 "first/service/user/service/user"
@@ -15,6 +16,34 @@ import (
 //TODO:
 // 1.对于 string 类型 进行 SQL 注入检查
 // 2.参数检查
+
+type ChatServiceImpl struct{}
+
+func (c *ChatServiceImpl) SendMsg(ctx context.Context, req *user.SaveMsgRequest) (resp *user.SaveMsgResponse, err error) {
+	resp = new(user.SaveMsgResponse)
+	err = chat.NewChatService(ctx).SaveChat(req)
+	if err != nil {
+		klog.Errorf("[User.SendMsg]: msg保存失败 %v", err)
+		resp.Resp = pack.BuildBaseResp(errno.MsgSaveErr)
+		return
+	}
+
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
+
+func (c *ChatServiceImpl) GetChatList(ctx context.Context, req *user.GetChatListRequest) (resp *user.GetChatListResponse, err error) {
+	resp = new(user.GetChatListResponse)
+	resp.MessageList, err = chat.NewChatService(ctx).GetChatList(req)
+	if err != nil {
+		klog.Errorf("[User.GetChatList]: 获取消息失败 %v", err)
+		resp.Resp = pack.BuildBaseResp(errno.MsgSaveErr)
+		return
+	}
+
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+}
 
 // UserServiceImpl implements the last service interface defined in the IDL.
 type UserServiceImpl struct{}
@@ -27,7 +56,7 @@ func isAdd(i *user.MessageActionType) bool {
 	return false
 }
 func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCommentRequest) (resp *user.
-	ActionCommentResponse, err error) {
+ActionCommentResponse, err error) {
 	resp = new(user.ActionCommentResponse)
 	if isAdd(req.ActionType) { // 创建
 		err = comment.NewCommentService(ctx).CreateComment(req)
@@ -85,7 +114,6 @@ func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest)
 
 // Register implements the UserServiceImpl interface.
 func (s *UserServiceImpl) Register(ctx context.Context, req *user.RegisterRequest) (resp *user.RegisterResponse, err error) {
-	log.Println("user rpc server")
 	if len(req.UserName) == 0 || len(req.PassWord) == 0 {
 		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
 		return

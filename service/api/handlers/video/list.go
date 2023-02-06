@@ -7,7 +7,6 @@ import (
 	"first/service/api/handlers"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
-	"log"
 )
 
 func (s *Service) List() func(c *gin.Context) {
@@ -23,11 +22,12 @@ func (s *Service) List() func(c *gin.Context) {
 
 		err = c.ShouldBind(&param)
 		if err != nil {
+			klog.Errorf("[获取发布视频]: 绑定参数失败: %v", err.Error())
 			goto ParamErr
 
 		}
 
-		log.Println("获取到 参数", param)
+		klog.Infof("[获取发布视频]: 获取到 参数", param)
 		//	2. 获取数据 绑定
 
 		list, err = s.Video.GetVideoList(c, &videoPb.GetVideoListRequest{
@@ -37,7 +37,7 @@ func (s *Service) List() func(c *gin.Context) {
 
 		user, err = s.User.GetUserInfo(c, &userPb.GetUserRequest{Id: param.GetUserId()})
 		if err != nil {
-			klog.Errorf("[Feed]: 获取视频用户信息失败: %v", err.Error())
+			klog.Errorf("[获取发布视频]: 获取视频用户信息失败: %v", err.Error())
 			handlers.SendResponse(c, errno.ServiceErr)
 			goto ErrHandler
 

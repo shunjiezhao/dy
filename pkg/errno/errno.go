@@ -33,6 +33,8 @@ const (
 	PublishVideoErrCode        = 10009
 	GetVideoErrCode            = 10010
 	LikeOpErrCode              = 10011
+	OpSelfErrCode              = 10012
+	MsgSaveErrCode             = 10013
 )
 
 type ErrNo struct {
@@ -59,13 +61,15 @@ var (
 	ParamErr               = NewErrNo(ParamErrCode, "Wrong Parameter has been given")
 	UserAlreadyExistErr    = NewErrNo(UserAlreadyExistErrCode, "User already exists")
 	UserAlreadyFollowErr   = NewErrNo(UserAlreadyFollowErrCode, "User already follow")
-	AuthorizationFailedErr = NewErrNo(AuthorizationFailedErrCode, "Authorization failed")
+	AuthorizationFailedErr = NewErrNo(AuthorizationFailedErrCode, "用户验证失败")
 	RecordNotExistErr      = NewErrNo(RecordNotExistErrCode, "record not exist")
 	RecordAlreadyExistErr  = NewErrNo(RecordAlreadyExistErrCode, "record already exist")
 	RemoteErr              = NewErrNo(RemoteErrCode, "稍后重试")
 	PublishVideoErr        = NewErrNo(PublishVideoErrCode, "上传视频失败")
 	GetVideoErr            = NewErrNo(GetVideoErrCode, "获取视频失败")
 	LikeOpErr              = NewErrNo(LikeOpErrCode, "喜欢操作失败")
+	OpSelfErr              = NewErrNo(OpSelfErrCode, "不能对自己操作哦")
+	MsgSaveErr             = NewErrNo(MsgSaveErrCode, "发送消息失败")
 )
 
 // ConvertErr convert error to Errno

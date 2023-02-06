@@ -38,7 +38,7 @@ func (proxy RpcProxy) LikeVideo(ctx context.Context, Req *videoPb.LikeVideoReque
 
 	resp, err := proxy.videoClient.LikeVideo(ctx, Req)
 	if err != nil {
-		return err
+		return errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
@@ -54,7 +54,7 @@ func (proxy RpcProxy) GetLikeVideo(ctx context.Context, Req *videoPb.GetVideoLis
 
 	resp, err := proxy.videoClient.GetLikeVideo(ctx, Req)
 	if err != nil {
-		return nil, err
+		return nil, errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
@@ -71,7 +71,7 @@ func (proxy RpcProxy) Upload(ctx context.Context, Req *videoPb.PublishListReques
 
 	resp, err := proxy.videoClient.Upload(ctx, Req)
 	if err != nil {
-		return err
+		return errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
@@ -88,7 +88,7 @@ func (proxy RpcProxy) GetVideoList(ctx context.Context, Req *videoPb.GetVideoLis
 
 	resp, err := proxy.videoClient.GetVideoList(ctx, Req)
 	if err != nil {
-		return nil, err
+		return nil, errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)

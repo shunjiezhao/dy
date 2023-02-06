@@ -20,21 +20,21 @@ func InitRouter(engine *gin.Engine) {
 	video := NewVideo(factory, video2.NewVideoProxy(), user.NewUserProxy())
 
 	dy := engine.Group("/douyin")
-	dy.GET("/feed/", video.Feed(jwtToken))
+	dy.GET("/feed/", video.Feed(jwtToken)) // 获取视频流
 
 	//	相关服务
 	group := dy.Group("/publish")
 	{
 
 		group.Use(jwtToken)
-		group.POST("/action/", video.Publish())
-		group.GET("/list/", video.List())
+		group.POST("/action/", video.Publish()) // 发布视频
+		group.GET("/list/", video.List())       // 获取发布的视频
 	}
 
 	favourite := dy.Group("/favorite")
 	{
 		favourite.Use(jwtToken)
-		favourite.POST("/action/", video.Like())
-		favourite.GET("/list/", video.LikeVideo())
+		favourite.POST("/action/", video.Like())   // 喜欢
+		favourite.GET("/list/", video.LikeVideo()) // 喜欢的视频列表
 	}
 }

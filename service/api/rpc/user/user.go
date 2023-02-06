@@ -62,7 +62,7 @@ func respIsErr(Resp *userPb.BaseResp) bool {
 func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest) (int64, error) {
 	resp, err := proxy.userClient.Register(ctx, req)
 	if err != nil {
-		return 0, err
+		return 0, errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
@@ -74,7 +74,7 @@ func (proxy RpcProxy) Register(ctx context.Context, req *userPb.RegisterRequest)
 func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserRequest) (int64, error) {
 	resp, err := proxy.userClient.CheckUser(ctx, req)
 	if err != nil {
-		return 0, err
+		return 0, errno.RemoteErr
 	}
 	// NOTICE: 注意判断, 可能上方用 new 导致 null pointer 异常
 	if respIsErr(resp.Resp) {
@@ -85,7 +85,7 @@ func (proxy RpcProxy) CheckUser(ctx context.Context, req *userPb.CheckUserReques
 func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserRequest) (*userPb.User, error) {
 	resp, err := proxy.userClient.GetUser(ctx, req)
 	if err != nil || resp.User == nil {
-		return nil, err
+		return nil, errno.RemoteErr
 	}
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
@@ -94,12 +94,12 @@ func (proxy RpcProxy) GetUserInfo(ctx context.Context, req *userPb.GetUserReques
 }
 func (proxy RpcProxy) GetUsers(ctx context.Context, Req *userPb.GetUserSRequest) ([]*userPb.User, error) {
 	if len(Req.Id) == 0 {
-		return nil, nil
+		return nil, errno.RemoteErr
 	}
 
 	resp, err := proxy.userClient.GetUsers(ctx, Req)
 	if err != nil || resp.User == nil {
-		return nil, err
+		return nil, errno.RemoteErr
 	}
 
 	if respIsErr(resp.Resp) {
