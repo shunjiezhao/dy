@@ -14,6 +14,7 @@ import (
 	"first/service/video/service"
 	"fmt"
 	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/u2takey/go-utils/json"
 	"time"
 )
 
@@ -123,12 +124,56 @@ func (s *VideoServiceImpl) GetVideoList(ctx context.Context, req *video.GetVideo
 ParamErr:
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return resp, nil
+}
+
+func (s *VideoServiceImpl) UpdateVideoInfoConStart() func() {
+	cons := mq.NewSubConsumer(constants.VActionVideoComCountQCount, constants.VActionVideoComCountExName,
+		mq.VGetActionVideoComQueueName, mq.VGetActionVideoComCountQueueKey, "")
+	done := make(chan struct{})
+	fmt.Println(len(cons))
+	for i := 0; i < len(cons); i++ {
+		go func(i int, con *mq.Consumer) {
+			consumer, err := con.Consumer()
+			if err != nil {
+				klog.Errorf("%d 号 消息队列挂掉, %v", i, err)
+				return
+			}
+			klog.Infof("%d 号 消息队列启动", i)
+			for data := range consumer {
+				var info mq.ActionCommentInfo
+				err = json.Unmarshal(data.Body, &info)
+				if err != nil {
+					klog.Infof("%d 好 unmarshal 失败 %v", i, err)
+					return
+				}
+
+				klog.Infof("%d 号 消息队列获取到参数:%#v", i, info)
+
+				for i := 0; i < 2; i++ {
+					_, err = s.IncrComment(context.Background(), &video.IncrCommentRequest{
+						VideoId: info.VideoId, //TODO:
+						Add:     info.ActionType == 1,
+					})
+					if err != nil {
+						klog.Errorf("%d 号 消息队列处理失败: DB保存失败%v", i, err)
+						continue
+					}
+					break
+				}
+			}
+
+		}(i, cons[i])
+	}
+	cleanUp := func() {
+		done <- struct{}{}
+	}
+	return cleanUp
 
 }
 
 //ConsumerStart 开启消费者 监听 Save.Video. 消息队列
 func (s *VideoServiceImpl) ConsumerStart() func() {
-	cons := service.NewSubConsumer()
+	cons := mq.NewSubConsumer(constants.VideoQCount, constants.SaveVideoExName, mq.GetSaveVideoQueueName, mq.GetSaveVideoQueueKey, "")
 	factory := storage.DefaultOssFactory{
 		Key: constants.OssSecretKey,
 		Id:  constants.OssSecretID,

@@ -31,7 +31,6 @@ type (
 
 		Author    int64 // 如果是获取作者的视频列表 GetAuthor = true
 		GetAuthor bool
-		TimeStamp int64 //
 
 		Uuid   int64 // UUid !=0  说明是登陆用户
 		IsLike bool

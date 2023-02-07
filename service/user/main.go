@@ -25,7 +25,9 @@ func Run(r registry.Registry, group sync.WaitGroup) {
 	if err != nil {
 		panic(err)
 	}
-	svr := user.NewServer(&UserServiceImpl{},
+	impl := &UserServiceImpl{}
+
+	svr := user.NewServer(impl,
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.UserServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                             // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),
@@ -33,6 +35,7 @@ func Run(r registry.Registry, group sync.WaitGroup) {
 		server.WithLimit(&limit.Option{MaxConnections: 10000, MaxQPS: 1000}), // limit
 		server.WithRegistry(r))
 
+	impl.UpdateVideoInfoConStart()
 	err = svr.Run()
 
 	if err != nil {

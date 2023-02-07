@@ -1,15 +1,18 @@
 package user
 
 import (
+	"first/pkg/constants"
 	"first/pkg/middleware"
+	"first/pkg/mq"
 	user2 "first/service/api/rpc/user"
 	"github.com/gin-gonic/gin"
 )
 
 //Service 用户微服务代理
 type Service struct {
-	rpc     user2.RpcProxyIFace
-	chatSrv user2.ChatProxy
+	rpc       user2.RpcProxyIFace
+	chatSrv   user2.ChatProxy
+	Publisher map[string][]*mq.Publisher
 }
 
 func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
@@ -20,9 +23,27 @@ func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
 		charSrv = user2.NewChatRpcProxy()
 	}
 	return &Service{
-		rpc:     rpc,
-		chatSrv: charSrv,
+		rpc:       rpc,
+		chatSrv:   charSrv,
+		Publisher: createPublisher(),
 	}
+}
+func createPublisher() map[string][]*mq.Publisher {
+	m := map[string][]*mq.Publisher{}
+	publishers := make([]*mq.Publisher, constants.UActionCommentQCount)
+	conn := mq.GetMqConnection()
+	for i := 0; i < int(constants.UActionCommentQCount); i++ {
+		publishers[i] = mq.NewPublisher(conn, constants.UActionCommentExName, mq.UGetActionCommentQueueKey(int64(i)))
+	}
+	m[constants.UActionCommentKey] = publishers
+
+	publishers = make([]*mq.Publisher, constants.VActionVideoComCountQCount)
+	for i := 0; i < int(constants.VActionVideoComCountQCount); i++ {
+		publishers[i] = mq.NewPublisher(conn, constants.VActionVideoComCountExName, mq.VGetActionVideoComCountQueueKey(int64(i)))
+	}
+	m[constants.VActionVideoComCountKey] = publishers
+
+	return m
 }
 
 func InitRouter(engine *gin.Engine, UserService *Service) {
@@ -35,7 +56,7 @@ func InitRouter(engine *gin.Engine, UserService *Service) {
 	// 用户相关
 	{
 		user.GET("", jwtToken, UserService.GetInfo())
-		user.POST("/register/", UserService.Register(), jwt.LogoutHandler)
+		user.POST("/register/", UserService.Register(), jwt.LoginHandler)
 		user.POST("/login/", UserService.Login(), jwt.LoginHandler)
 	}
 	// 社交接口的相关实现

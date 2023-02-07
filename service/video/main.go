@@ -38,6 +38,8 @@ func main() {
 
 	clean := service.ConsumerStart()
 	defer clean()
+	clean = service.UpdateVideoInfoConStart()
+	defer clean()
 	err = svr.Run()
 
 	if err != nil {

@@ -77,7 +77,7 @@ func (proxy RpcProxy) GetVideoList(ctx context.Context, param *common.FeedReques
 		req.GetAuthor_ = true
 		req.Author = param.Author
 	} else if param.Uuid == 0 {
-		req.TimeStamp = param.TimeStamp // 获取当前点之后的
+		req.TimeStamp = param.LatestTime // 获取当前点之后的
 	} else {
 		req.Uuid = param.Uuid
 		req.IsLike = param.IsLike

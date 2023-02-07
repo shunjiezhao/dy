@@ -4,10 +4,14 @@ import (
 	"context"
 	"first/pkg/constants"
 	"first/pkg/errno"
+	"first/pkg/mq"
+	"first/pkg/util"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
+	"github.com/u2takey/go-utils/json"
+	"time"
 )
 
 func (s *Service) GetCommentList() func(c *gin.Context) {
@@ -53,6 +57,7 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 			param   common.CommentActionRequest //http 请求参数
 			ctx     context.Context             = c.Request.Context()
 			comment *handlers.Comment
+			data    []byte
 		)
 
 		// token 检验成功 开始 绑定参数
@@ -67,17 +72,42 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 		}
 		param.UserId = getTokenUserId(c)
 
+		if param.CommentActionType.IsAdd() {
+			param.CommentId = util.NextVal()
+		}
+		// 发送消息队列
+		data, err = param2Info(&param)
+		if err != nil {
+			klog.Errorf("[评论操作] json 化失败 %v", err.Error())
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
+
+		}
+
+		err = s.Publisher[constants.UActionCommentKey][mq.UGetActionCommentIdx(param.VideoId)].Publish(ctx, data)
+		if err != nil {
+			klog.Infof("[评论操作]发送失败")
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
+		}
+		err = s.Publisher[constants.VActionVideoComCountKey][mq.VGetActionVideoComCountIdx(param.VideoId)].Publish(ctx, data)
+		if err != nil {
+			klog.Infof("[评论操作]发送失败")
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
+
+		}
+
 		// rpc 调用
 
-		comment, err = s.rpc.ActionComment(ctx, &param)
+		comment = &handlers.Comment{
+			Id:         param.CommentId,
+			Content:    param.CommentText,
+			CreateDate: time.Now().Format(constants.TimeFormatS),
+		}
 		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, param.CommentActionType)
 		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, comment)
 
-		if err != nil {
-			klog.Errorf("[评论操作] 调用[用户服务] 获取评论失败 %v", err.Error())
-			handlers.SendResponse(c, err)
-			goto errHandler
-		}
 		comment.User = &handlers.User{
 			Id:   param.UserId,
 			Name: c.MustGet(constants.UserNameKey).(string),
@@ -87,4 +117,14 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 	errHandler:
 		c.Abort()
 	}
+}
+func param2Info(param *common.CommentActionRequest) ([]byte, error) {
+	info := mq.ActionCommentInfo{
+		Uuid:        param.UserId,
+		VideoId:     param.VideoId,
+		ActionType:  int32(param.CommentActionType),
+		CommentText: param.CommentText,
+		CommentId:   param.CommentId,
+	}
+	return json.Marshal(info)
 }

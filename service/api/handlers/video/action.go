@@ -96,7 +96,7 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 		//4.传入消息队列
-		err = s.Publisher[mq.GetSaveVideoIdx(uuid)].Publish(ctx, data)
+		err = s.VideoPublisher[mq.GetSaveVideoIdx(uuid)].Publish(ctx, data)
 		if err != nil {
 			klog.Errorf("[发布视频]:  发送消息队列失败 %v", err)
 			goto errHandler

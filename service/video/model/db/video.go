@@ -3,9 +3,9 @@ package db
 import (
 	"context"
 	"first/pkg/constants"
-	"first/pkg/logger"
 	"first/pkg/util"
 	"fmt"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -13,7 +13,7 @@ import (
 // CreateVideoItem 创建 视频信息
 func CreateVideoItem(db *gorm.DB, ctx context.Context, video *Video) error {
 	if err := db.WithContext(ctx).Create(video).Error; err != nil {
-		logger.GetLogger().Error("[DB]: 保存视频信息失败", zap.String("err", err.Error()))
+		klog.Error("[DB]: 保存视频信息失败", zap.String("err", err.Error()))
 		return err
 	}
 	return nil
@@ -24,8 +24,11 @@ func IncrVideoCommentCount(db *gorm.DB, ctx context.Context, videoId int64, add 
 	if !add {
 		op = "comment_count - ?"
 	}
-	if err := db.WithContext(ctx).Table(constants.VideoTableName).Update("comment_count", gorm.Expr(op, 1)).Error; err != nil {
-		logger.GetLogger().Error("[DB]: 保存视频信息失败", zap.String("err", err.Error()))
+	if err := db.WithContext(ctx).Table(constants.VideoTableName).Where("video_id = ?",
+		videoId).Update("comment_count",
+		gorm.Expr(op,
+			1)).Error; err != nil {
+		klog.Error("[DB]: 保存视频信息失败", zap.String("err", err.Error()))
 		return err
 	}
 	return nil

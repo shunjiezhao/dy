@@ -12,9 +12,9 @@ import (
 type (
 	//Service 用户微服务代理
 	Service struct {
-		Video     video2.RpcProxyIFace
-		User      user.RpcProxyIFace
-		Publisher []*mq.Publisher
+		Video          video2.RpcProxyIFace
+		User           user.RpcProxyIFace
+		VideoPublisher []*mq.Publisher
 	}
 )
 
@@ -24,9 +24,9 @@ func NewVideo(face video2.RpcProxyIFace, userFace user.RpcProxyIFace,
 		return nil
 	}
 	service := Service{
-		Video:     face,
-		User:      userFace,
-		Publisher: Pub,
+		Video:          face,
+		User:           userFace,
+		VideoPublisher: Pub,
 	}
 
 	return &service

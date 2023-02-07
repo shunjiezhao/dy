@@ -20,16 +20,18 @@ CREATE TABLE if not exists dy.user_info
     uuid           bigint       NOT NULL COMMENT '用户唯一标识',
     username       varchar(100) NOT NULL comment '用户登陆名',
     password       varchar(200) NOT NULL COMMENT '用户登陆密码',
-    follow_count   int DEFAULT 0 COMMENT '用户关注数量',
-    follower_count int DEFAULT 0 COMMENT '用户粉丝数量',
+    follow_count   int  DEFAULT 0 COMMENT '用户关注数量',
+    follower_count int  DEFAULT 0 COMMENT '用户粉丝数量',
     nickname       varchar(100) NOT NULL COMMENT '用户名',
+    is_follow      bool default 0 COMMENT '是否关注',
     created_at     date         NOT NULL,
     updated_at     date         NOT NULL,
     deleted_at     date,
     PRIMARY KEY (uuid),
     UNIQUE KEY (username),
     check ( follow_count >= 0 ),
-    check ( follower_count >= 0 )
+    check ( follower_count >= 0 ),
+    check ( is_follow = false ) # 没用
 ) ENGINE = InnoDB
   DEFAULT charset = utf8mb4;
 

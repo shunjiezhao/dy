@@ -10,7 +10,15 @@ var (
 	SaveVideoKey          = "saveVideo"
 	VideoQCount     int64 = 4
 
-	//  Add Comment
-	AddCommentExName = "添加评论"
-	AddCommentPrefix = "dy.add.comment."
+	//  Action Comment
+	UActionCommentExName       = "评论操作"
+	UActionCommentPrefix       = "dy.action.comment."
+	UActionCommentKey          = "actionComment"
+	UActionCommentQCount int64 = 1
+
+	// Update Video Info
+	VActionVideoComCountExName       = "评论操作"
+	VActionVideoComCountPrefix       = "action.video.comment.count."
+	VActionVideoComCountKey          = "actionVideoComment"
+	VActionVideoComCountQCount int64 = 1
 )
