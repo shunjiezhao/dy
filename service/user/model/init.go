@@ -19,5 +19,5 @@ import "first/service/user/model/db"
 
 // InitUserDB init model
 func InitUserDB() {
-	db.Init() // mysql init
+	db.Init("") // mysql init
 }

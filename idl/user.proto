@@ -78,6 +78,7 @@ service UserService{
   rpc ActionComment(ActionCommentRequest) returns(ActionCommentResponse){};
   // 获取评论
   rpc GetComment(GetCommentRequest) returns(GetCommentResponse){};
+
 }
 message GetUserSRequest{
   repeated int64 id = 1;
@@ -154,7 +155,17 @@ message Message {
   int64 created_at_s = 4; // 单位s
   int64 message_id = 5;
 }
+message GetFriendChatRequest{
+  int64 from_user_id = 1;
+}
+message GetFriendChatResponse{
+  BaseResp resp = 1;
+  repeated Message msg= 2;
+}
+
+
 service ChatService{
   rpc SendMsg(SaveMsgRequest) returns(SaveMsgResponse){}; //发送消息
   rpc GetChatList(GetChatListRequest) returns(GetChatListResponse){}; // 获取消息列表
+  rpc GetFriendChatList(GetFriendChatRequest) returns (GetFriendChatResponse){};
 }

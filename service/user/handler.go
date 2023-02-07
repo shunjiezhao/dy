@@ -19,8 +19,31 @@ import (
 
 type ChatServiceImpl struct{}
 
+func (c *ChatServiceImpl) GetFriendChatList(ctx context.Context, req *user.GetFriendChatRequest) (resp *user.GetFriendChatResponse, err error) {
+	resp = new(user.GetFriendChatResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
+	resp.Msg, err = chat.NewChatService(ctx).GetFriendChatList(req)
+	if err != nil {
+		klog.Errorf("[获取好友消息记录] :获取出错 %v", err)
+		resp.Resp = pack.BuildBaseResp(errno.ServiceErr)
+		return
+	}
+
+	return
+}
+
 func (c *ChatServiceImpl) SendMsg(ctx context.Context, req *user.SaveMsgRequest) (resp *user.SaveMsgResponse, err error) {
 	resp = new(user.SaveMsgResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
+
 	err = chat.NewChatService(ctx).SaveChat(req)
 	if err != nil {
 		klog.Errorf("[User.SendMsg]: msg保存失败 %v", err)
@@ -34,6 +57,12 @@ func (c *ChatServiceImpl) SendMsg(ctx context.Context, req *user.SaveMsgRequest)
 
 func (c *ChatServiceImpl) GetChatList(ctx context.Context, req *user.GetChatListRequest) (resp *user.GetChatListResponse, err error) {
 	resp = new(user.GetChatListResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
+
 	resp.MessageList, err = chat.NewChatService(ctx).GetChatList(req)
 	if err != nil {
 		klog.Errorf("[User.GetChatList]: 获取消息失败 %v", err)
@@ -56,8 +85,13 @@ func isAdd(i int32) bool {
 	return false
 }
 func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCommentRequest) (resp *user.
-	ActionCommentResponse, err error) {
+ActionCommentResponse, err error) {
 	resp = new(user.ActionCommentResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	if isAdd(req.ActionType) { // 创建
 		resp.Comment, err = comment.NewCommentService(ctx).CreateComment(req)
 	} else {
@@ -112,6 +146,11 @@ func (s *UserServiceImpl) GetUsers(ctx context.Context, req *user.GetUserSReques
 func (s *UserServiceImpl) GetUser(ctx context.Context, req *user.GetUserRequest) (resp *user.GetUserResponse, err error) {
 	log.Println("user rpc server: get user")
 	resp = new(user.GetUserResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	resp.User, err = user2.NewGetUserService(ctx).GetUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
@@ -128,6 +167,11 @@ func (s *UserServiceImpl) Register(ctx context.Context, req *user.RegisterReques
 		return
 	}
 	resp = new(user.RegisterResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	resp.Id, err = user2.NewCreateUserService(ctx).CreateUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
@@ -140,6 +184,11 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 	err error) {
 	log.Println("user rpc server: check user")
 	resp = &user.CheckUserResponse{} // 使用 new 里面的resp 不会初始化
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	resp.User, err = user2.NewCheckUserService(ctx).CheckUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.AuthorizationFailedErr)
@@ -152,6 +201,11 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 // GetFollowerList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerListRequest) (resp *user.UserListResponse, err error) {
 	resp = new(user.UserListResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	resp.User, err = follow.NewGetFollowerUserListService(ctx).GetFollowerUserList(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
@@ -164,6 +218,11 @@ func (s *UserServiceImpl) GetFollowerList(ctx context.Context, req *user.GetFoll
 // GetFollowList implements the UserServiceImpl interface.
 func (s *UserServiceImpl) GetFollowList(ctx context.Context, req *user.GetFollowListRequest) (resp *user.UserListResponse, err error) {
 	resp = new(user.UserListResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	resp.User, err = follow.NewGetFollowUserListService(ctx).GetFollowUserList(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
@@ -178,6 +237,11 @@ func (s *UserServiceImpl) Follow(ctx context.Context, req *user.FollowRequest) (
 	log.Println("user rpc server: follow user")
 	//??? 如果再次关注会怎么样?
 	resp = new(user.FollowResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	_, err = user2.NewFollowUserService(ctx).FollowUser(req)
 	resp.Resp = pack.BuildBaseResp(err)
 
@@ -194,6 +258,11 @@ func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest)
 	err error) {
 	log.Println("user rpc server: follow user")
 	resp = new(user.FollowResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
 	_, err = user2.NewUnFollowUserService(ctx).UnFollowUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(err)
@@ -205,6 +274,5 @@ func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest)
 
 // GetFriendList 返回好友列表
 func (s *UserServiceImpl) GetFriendList(ctx context.Context, req *user.FollowRequest) (resp *user.GetFriendResponse, err error) {
-
 	return
 }

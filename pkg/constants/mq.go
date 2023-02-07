@@ -1,6 +1,6 @@
 package constants
 
-var (
+const (
 	// MQ
 	MQConnURL = "amqp://rabbit:123456@localhost:5672/"
 

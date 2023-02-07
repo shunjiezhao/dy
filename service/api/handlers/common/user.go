@@ -158,6 +158,21 @@ type (
 		handlers.Response
 		MessageList []*handlers.Message `json:"message_list"` // 消息列表
 	}
+	//好友列表
+	FriendListRequest struct {
+		handlers.Token
+		handlers.UserId
+	}
+
+	FriendListResponse struct {
+		handlers.Response
+		UserList []*FriendUser // 用户列表
+	}
+
+	FriendUser struct {
+		Message string `json:"message"`
+		MsgType int64  `json:"msg_type"`
+	}
 )
 
 func SendCommentListResponse(c *gin.Context, comments []*handlers.Comment) {
@@ -190,5 +205,11 @@ func GetChatListResponse(c *gin.Context, msg []*handlers.Message) {
 	c.JSON(consts.StatusOK, ChatListResponse{
 		Response:    handlers.BuildResponse(errno.Success),
 		MessageList: msg,
+	})
+}
+func GetFriendListResponse(c *gin.Context, msg []*FriendUser) {
+	c.JSON(consts.StatusOK, FriendListResponse{
+		Response: handlers.BuildResponse(errno.Success),
+		UserList: msg,
 	})
 }

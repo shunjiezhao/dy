@@ -37,10 +37,15 @@ func InitChatRpc() {
 type ChatProxy interface {
 	Save(context.Context, *handlers.Message) error
 	GetList(context.Context, handlers.FromUserId, handlers.ToUserId) ([]*handlers.Message, error)
+	GetFriendChatList(context.Context, handlers.FromUserId) ([]*handlers.Message, error)
 }
 
 type ChatRpcProxy struct {
 	chatClient chatservice.Client
+}
+
+func (c *ChatRpcProxy) GetFriendChatList(ctx context.Context, id handlers.FromUserId) ([]*handlers.Message, error) {
+	r, err := c.chatClient.GetChatList()
 }
 
 func (c *ChatRpcProxy) Save(ctx context.Context, message *handlers.Message) error {

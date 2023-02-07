@@ -34,7 +34,7 @@ services:
       - MYSQL_DATABASE=dy
       - MYSQL_USER=dy
       - MYSQL_PASSWORD=123456
-      - MYSQL_RANDOM_ROOT_PASSWORD="yes"'
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
   rabbitmq:
     restart: always
     image: rabbitmq:management

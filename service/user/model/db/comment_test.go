@@ -10,7 +10,6 @@ import (
 
 func TestComment(t *testing.T) {
 	//1.创建数据
-	Init()
 	if DB == nil {
 		t.Fatalf("DB 初始化失败")
 	}
@@ -39,7 +38,7 @@ func TestComment(t *testing.T) {
 			},
 		}
 		DB.Unscoped().Delete(commets[i], commets[i].Id)
-		err := CreateComment(ctx, commets[i])
+		_, err := CreateComment(ctx, commets[i])
 		if err != nil {
 			t.Fatalf("插入评论失败")
 		}

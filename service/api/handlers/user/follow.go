@@ -20,28 +20,28 @@ func getOther(userId, otherId int64) bool {
 	return shouldGetOther
 }
 
-//GetFriendList 获取关注的列表
+//GetFriendList 获取好友列表
 func (s *Service) GetFriendList() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			err       error
-			param     common.GetUserFollowListRequest //http 请求参数
-			curUserId int64                           //当前用户的 userid
-			list      []*handlers.User                // 返回的粉丝列表
-			ctx       context.Context                 = c.Request.Context()
+			param     common.FriendListRequest //http 请求参数
+			curUserId int64                    //当前用户的 userid
+			list      []*handlers.User         // 返回的粉丝列表
+			ctx       context.Context          = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
 		if curUserId == -1 {
 			klog.Error("获取 user_id 出错")
 			goto errHandler
 		}
+
 		// token 检验成功 开始 绑定参数
 		err = c.ShouldBindQuery(&param)
 		if err != nil || param.GetUserId() == 0 || param.GetToken() == "" {
 			err = c.ShouldBind(&param)
 		}
-		//不能获取别人的
-		if err != nil || !getOther(curUserId, param.GetUserId()) {
+		if err != nil {
 			klog.Errorf("[获取好友列表]: 获取 参数 %+v", param)
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
@@ -49,7 +49,7 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 
 		// rpc 调用
 
-		list, err = s.rpc.GetFollowList(ctx, &param)
+		list, err = s.chatSrv.GetFriendChatList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[获取好友列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)

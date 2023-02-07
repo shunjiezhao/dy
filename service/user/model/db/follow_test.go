@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"first/pkg/util"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -12,7 +13,6 @@ import (
 )
 
 func TestGetFollowUserList(t *testing.T) {
-	Init()
 	// 删除
 	assert.Empty(t, DB.Unscoped().Delete(&User{}, 1, 2, 3, 4).Error)
 
@@ -110,7 +110,6 @@ func insertUserHelper(n int) []*User {
 
 func TestFollowUser(t *testing.T) {
 	//1.创建数据
-	Init()
 	//1. 创建 3 个 user
 	users := insertUserHelper(3)
 	for _, user := range users {
@@ -236,6 +235,9 @@ func getFollowsHelper(input string) []*Follow {
 }
 
 func TestMain(t *testing.M) {
-	//TODO: DOCKER  RUN
+	docker, clean := util.MysqlStartInDocker(t)
+	time.Sleep(time.Second * 14) // 等待 mysql 初始话
+	defer clean()
+	Init(docker)
 	os.Exit(t.Run())
 }

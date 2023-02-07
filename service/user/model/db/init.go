@@ -26,16 +26,18 @@ var DB *gorm.DB
 var once sync.Once
 
 // Init init DB
-func Init() {
+func Init(url string) {
+	if url == "" {
+		url = constants.MySQLDefaultDSN
+	}
 	once.Do(func() {
 		var err error
-		DB, err = gorm.Open(mysql.Open(constants.MySQLDefaultDSN),
+		DB, err = gorm.Open(mysql.Open(url),
 			&gorm.Config{
 				PrepareStmt:            true,
 				SkipDefaultTransaction: true,
 			},
 		)
-		err = DB.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(&Comment{})
 		if err != nil {
 			panic(err)
 		}
