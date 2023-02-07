@@ -5,6 +5,7 @@ import (
 	"first/pkg/errno"
 	"first/service/api/handlers"
 	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -18,6 +19,8 @@ var (
 	once       sync.Once
 )
 
+type PayLoad map[string]interface{}
+
 func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
 	once.Do(func() {
 		var err error
@@ -30,9 +33,10 @@ func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
 			SigningAlgorithm: "RS256",
 			Authorizator:     nil,
 			PayloadFunc: func(data interface{}) jwt.MapClaims {
-				if v, ok := data.(int64); ok {
+				if v, ok := data.(PayLoad); ok {
 					return jwt.MapClaims{
-						constants.IdentityKey: v,
+						constants.IdentityKey: v[constants.IdentityKey],
+						constants.UserNameKey: v[constants.UserNameKey],
 					}
 				}
 				return jwt.MapClaims{}
@@ -56,10 +60,11 @@ func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
 				})
 			},
 			Authenticator: func(c *gin.Context) (interface{}, error) {
-				value, exists := c.Get(constants.IdentityKey)
+				value, exists := c.Get(constants.PayLodKey)
 				if !exists {
 					return "", jwt.ErrMissingLoginValues
 				}
+
 				return value, nil
 			},
 			PubKeyBytes:   constants.PublicKeyFile,
@@ -90,7 +95,16 @@ func JwtMiddle() (*jwt.GinJWTMiddleware, gin.HandlerFunc) {
 			} else {
 				curUserId = fromJWT[constants.IdentityKey].(int64)
 			}
+			var userName string
+			userName, ok = fromJWT[constants.UserNameKey].(string)
+			if !ok {
+				klog.Error("没有在token中获取到userName ")
+				c.Abort()
+				return
+			}
+
 			c.Set(constants.IdentityKey, curUserId)
+			c.Set(constants.UserNameKey, userName)
 			c.Next()
 		})
 	})

@@ -101,6 +101,7 @@ func (s *Service) GetChatList() func(c *gin.Context) {
 
 		}
 		klog.Infof("[获取消息]: [%d->%d]聊天 信息", curUserId, param.GetToUserId())
+		//TODO: LOG
 		log.Printf("%+v", msgs[0])
 		log.Printf("%#v", msgs[0])
 

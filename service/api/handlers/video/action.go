@@ -1,16 +1,28 @@
 package video
 
 import (
+	"bytes"
+	"encoding/gob"
 	"first/pkg/errno"
+	"first/pkg/mq"
+	"first/pkg/storage"
+	"first/pkg/util"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
+	"io"
 	"mime/multipart"
 	"time"
 )
 
 const defaultMaxSize int64 = 32 << 20
+
+type SliceMock struct {
+	addr uintptr
+	len  int
+	cap  int
+}
 
 func (s *Service) Publish() func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -19,6 +31,13 @@ func (s *Service) Publish() func(c *gin.Context) {
 			param      common.PublishRequest
 			fileHeader *multipart.FileHeader
 			//fileInfo   storage.AccessUrl
+			file     multipart.File
+			data     []byte
+			uuid     int64
+			saveInfo *storage.Info
+			ctx      = c.Request.Context()
+			byte2    bytes.Buffer
+			encoder  *gob.Encoder
 		)
 		// 1. 检查文件大小
 		err = c.Request.ParseMultipartForm(defaultMaxSize)
@@ -42,15 +61,49 @@ func (s *Service) Publish() func(c *gin.Context) {
 			goto ParamErr
 
 		}
-		//	3. 调用储存接口
-		s.Storage.UploadFile(param.Title, fileHeader, handlers.GetTokenUserId(c), time.Now())
+
+		//3.压缩文件
+		file, err = fileHeader.Open()
+		defer file.Close()
 		if err != nil {
-			klog.Errorf("[发布视频]:  rpc 出现错误: %v\n", err)
-			handlers.SendResponse(c, errno.NewErrNo(errno.ServiceErrCode, err.Error()))
+			return
+		}
+
+		data, err = io.ReadAll(file)
+		if err != nil {
+			return
+		}
+
+		saveInfo = &storage.Info{
+			Data:  data,
+			Time:  time.Now().Unix(),
+			Uuid:  handlers.GetTokenUserId(c),
+			Title: param.Title,
+		}
+		encoder = gob.NewEncoder(&byte2)
+		err = encoder.Encode(saveInfo)
+
+		if err != nil {
+			klog.Error("转换失败")
+			handlers.SendResponse(c, err)
+			goto errHandler
+		}
+		data, err = util.Compress(byte2.Bytes())
+		if err != nil {
+			klog.Error("加密失败")
+			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
-		klog.Info("[发布视频]: 	成功")
+		//4.传入消息队列
+		err = s.Publisher[mq.GetSaveVideoIdx(uuid)].Publish(ctx, data)
+		if err != nil {
+			klog.Errorf("[发布视频]:  发送消息队列失败 %v", err)
+			goto errHandler
+
+		}
+
+		//klog.Info("[发布视频]: 	成功")
 		handlers.SendResponse(c, errno.Success)
 		return
 

@@ -2,9 +2,7 @@ package storage
 
 import (
 	"first/pkg/upload"
-	"mime/multipart"
 	"os"
-	"time"
 )
 
 type defaultFileFactory struct {
@@ -19,28 +17,31 @@ type defaultFileStorage struct {
 	UploadServerUrl string
 }
 
-func (svc defaultFileStorage) UploadFile(title string, fileHeader *multipart.FileHeader, i int64, time time.Time) {
-	fileName := upload.GetFileName(fileHeader.Filename)
+func (svc defaultFileStorage) UploadFile(info *Info) (string, string) {
+	title := info.Title
+	fileName := upload.GetFileName(title)
 	ext := upload.GetFileExt(fileName)
 
 	uploadSavePath := upload.GetSavePath()
 	if upload.CheckSavePath(uploadSavePath) {
 		err := upload.CreateSavePath(uploadSavePath, os.ModePerm)
 		if err != nil {
-			return
+			return "", ""
 		}
 	}
 
 	if upload.CheckPermission(uploadSavePath) {
-		return
+		return "", ""
+
 	}
 
 	dst := uploadSavePath + "/" + title + "." + ext
 
-	err := upload.SaveFile(fileHeader, dst)
+	err := upload.SaveFile(info.Data, dst)
 	if err != nil {
-		return
+		return "", ""
+
 	}
 	//accessUrl := constants.UploadServerUrl + "/" + dst
-	return
+	return "", ""
 }

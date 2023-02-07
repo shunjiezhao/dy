@@ -2,8 +2,6 @@ package storage
 
 import (
 	"context"
-	"mime/multipart"
-	"time"
 )
 
 type (
@@ -17,8 +15,15 @@ type (
 		Publish(context.Context, AccessUrl) error
 	}
 
+	Info struct {
+		Data  []byte `json:"data,omitempty"`
+		Time  int64  `json:"time,omitempty"`
+		Uuid  int64  `json:"uuid"`
+		Title string `json:"title"`
+	}
+
 	Storage interface {
-		UploadFile(string, *multipart.FileHeader, int64, time.Time) // 返回我们的 获取链接
+		UploadFile(*Info) (string, string) // 返回我们的 获取链接
 	}
 
 	StorageFactory interface {

@@ -2,7 +2,9 @@ package pack
 
 import (
 	"first/kitex_gen/user"
+	"first/pkg/constants"
 	"first/service/api/handlers"
+	"time"
 )
 
 func User(u *user.User) *handlers.User {
@@ -26,23 +28,23 @@ func Users(u []*user.User) []*handlers.User {
 	return users
 }
 
-func PackComments(com []*user.Comment) []*handlers.Comment {
+func Comments(com []*user.Comment) []*handlers.Comment {
 	comments := make([]*handlers.Comment, 0)
 	if len(com) == 0 {
 		return comments
 	}
 
 	for i := 0; i < len(com); i++ {
-		comments = append(comments, PackComment(com[i]))
+		comments = append(comments, Comment(com[i]))
 	}
 	return comments
 }
 
-func PackComment(c *user.Comment) *handlers.Comment {
+func Comment(c *user.Comment) *handlers.Comment {
 	return &handlers.Comment{
 		Id:         c.Id,
 		User:       User(c.User),
 		Content:    c.Content,
-		CreateDate: c.CreateDate,
+		CreateDate: time.Unix(c.CreateDate, 0).Format(constants.TimeFormatS),
 	}
 }

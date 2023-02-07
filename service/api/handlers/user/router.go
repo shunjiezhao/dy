@@ -35,7 +35,7 @@ func InitRouter(engine *gin.Engine, UserService *Service) {
 	// 用户相关
 	{
 		user.GET("", jwtToken, UserService.GetInfo())
-		user.POST("/register/", UserService.Register(jwt.TokenGenerator))
+		user.POST("/register/", UserService.Register(), jwt.LogoutHandler)
 		user.POST("/login/", UserService.Login(), jwt.LoginHandler)
 	}
 	// 社交接口的相关实现
@@ -54,8 +54,9 @@ func InitRouter(engine *gin.Engine, UserService *Service) {
 	comment := dy.Group("/comment")
 	{
 		comment.Use(jwtToken)
+
 		comment.GET("/list/", UserService.GetCommentList())
-		comment.GET("/action/", UserService.ActionComment())
+		comment.POST("/action/", UserService.ActionComment())
 	}
 	message := dy.Group("/message/")
 	{

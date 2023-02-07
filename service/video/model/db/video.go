@@ -19,6 +19,18 @@ func CreateVideoItem(db *gorm.DB, ctx context.Context, video *Video) error {
 	return nil
 }
 
+func IncrVideoCommentCount(db *gorm.DB, ctx context.Context, videoId int64, add bool) error {
+	var op = "comment_count + ?"
+	if !add {
+		op = "comment_count - ?"
+	}
+	if err := db.WithContext(ctx).Table(constants.VideoTableName).Update("comment_count", gorm.Expr(op, 1)).Error; err != nil {
+		logger.GetLogger().Error("[DB]: 保存视频信息失败", zap.String("err", err.Error()))
+		return err
+	}
+	return nil
+}
+
 // GetUserPublish 获取用户的发布列表
 func GetUserPublish(db *gorm.DB, ctx context.Context, uuid int64) ([]*Video, error) {
 	if db == nil {

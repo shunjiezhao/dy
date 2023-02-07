@@ -59,7 +59,7 @@ func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCom
 	ActionCommentResponse, err error) {
 	resp = new(user.ActionCommentResponse)
 	if isAdd(req.ActionType) { // 创建
-		err = comment.NewCommentService(ctx).CreateComment(req)
+		resp.Comment, err = comment.NewCommentService(ctx).CreateComment(req)
 	} else {
 		err = comment.NewCommentService(ctx).DeleteComment(req)
 	}
@@ -69,6 +69,7 @@ func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCom
 		return resp, nil
 	}
 	resp.Resp = pack.BuildBaseResp(errno.Success)
+
 	return
 }
 
@@ -139,7 +140,7 @@ func (s *UserServiceImpl) CheckUser(ctx context.Context, req *user.CheckUserRequ
 	err error) {
 	log.Println("user rpc server: check user")
 	resp = &user.CheckUserResponse{} // 使用 new 里面的resp 不会初始化
-	resp.Id, err = user2.NewCheckUserService(ctx).CheckUser(req)
+	resp.User, err = user2.NewCheckUserService(ctx).CheckUser(req)
 	if err != nil {
 		resp.Resp = pack.BuildBaseResp(errno.AuthorizationFailedErr)
 		return resp, nil

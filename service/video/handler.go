@@ -1,16 +1,43 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	video "first/kitex_gen/video"
+	"first/pkg/constants"
 	"first/pkg/errno"
+	"first/pkg/mq"
+	"first/pkg/storage"
+	"first/pkg/util"
 	"first/service/video/pack"
 	"first/service/video/service"
+	"fmt"
 	"github.com/cloudwego/kitex/pkg/klog"
+	"time"
 )
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
 type VideoServiceImpl struct{}
+
+func (s *VideoServiceImpl) IncrComment(ctx context.Context, req *video.IncrCommentRequest) (resp *video.IncrCommentResponse, err error) {
+	resp = new(video.IncrCommentResponse)
+	if req == nil {
+		goto ParamErr
+	}
+	err = service.NewVideoItemService(ctx).IncrCommentCount(req)
+	if err != nil {
+		resp.Resp = pack.BuildBaseResp(errno.LikeOpErr)
+		return resp, nil
+
+	}
+
+	resp.Resp = pack.BuildBaseResp(errno.Success)
+	return
+ParamErr:
+	resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+	return
+}
 
 func (s *VideoServiceImpl) LikeVideo(ctx context.Context, req *video.LikeVideoRequest) (resp *video.LikeVideoResponse, err error) {
 	resp = new(video.LikeVideoResponse)
@@ -49,7 +76,7 @@ func (s *VideoServiceImpl) Upload(ctx context.Context, req *video.PublishListReq
 		return resp, nil
 	}
 
-	err := service.NewCreateVideoItemService(ctx).CreateVideoItem(req) // 创建 video item
+	err := service.NewVideoItemService(ctx).CreateVideoItem(req) // 创建 video item
 	if err != nil {
 		klog.Errorf("save video item error: %v", err.Error())
 		resp.Resp = pack.BuildBaseResp(errno.PublishVideoErr)
@@ -97,4 +124,77 @@ ParamErr:
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return resp, nil
 
+}
+
+//ConsumerStart 开启消费者 监听 Save.Video. 消息队列
+func (s *VideoServiceImpl) ConsumerStart() func() {
+	cons := service.NewSubConsumer()
+	factory := storage.DefaultOssFactory{
+		Key: constants.OssSecretKey,
+		Id:  constants.OssSecretID,
+		Url: constants.OssUrl,
+	}
+	upload := factory.Factory()
+
+	done := make(chan struct{})
+	fmt.Println(len(cons))
+	for i := 0; i < len(cons); i++ {
+		go func(i int, con *mq.Consumer) {
+			consumer, err := con.Consumer()
+			if err != nil {
+				klog.Errorf("%d 号 消息队列挂掉, %v", i, err)
+				return
+			}
+			klog.Infof("%d 号 消息队列启动", i)
+			for data := range consumer {
+				data.Body, err = util.DeCompress(data.Body)
+				if err != nil {
+					klog.Errorf("%d 号 消息解压失败:%v", i, err)
+					return
+				}
+				buf := bytes.NewReader(data.Body)
+
+				if err != nil {
+					klog.Errorf("%d 号 消息接受失败:%v", i, err)
+					continue
+				}
+
+				decoder := gob.NewDecoder(buf)
+				if err != nil {
+					//TODO:继续发送
+					klog.Errorf("%d 号 消息队列处理失败:%v", i, err)
+					continue
+
+				}
+				var info storage.Info
+				err = decoder.Decode(&info)
+				if err != nil {
+					return
+				}
+				klog.Infof("%d 号 消息队列获取到参数:%s %d %d", i, info.Title, info.Uuid, time.Unix(info.Time,
+					0).Format(constants.TimeFormatS))
+
+				playUrl, coverUrl := upload.UploadFile(&info)
+				for i := 0; i < 2; i++ {
+					_, err = s.Upload(context.Background(), &video.PublishListRequest{
+						Author:   info.Uuid,
+						PlayUrl:  playUrl,
+						CoverUrl: coverUrl,
+						Title:    info.Title,
+					})
+					if err != nil {
+						klog.Errorf("%d 号 消息队列处理失败: DB保存失败%v", i, err)
+						continue
+					}
+					break
+				}
+			}
+
+		}(i, cons[i])
+	}
+	cleanUp := func() {
+		done <- struct{}{}
+	}
+
+	return cleanUp
 }

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
@@ -66,17 +67,21 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 		}
 		param.UserId = getTokenUserId(c)
 
-		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, param.CommentActionType)
-
 		// rpc 调用
 
 		comment, err = s.rpc.ActionComment(ctx, &param)
+		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, param.CommentActionType)
+		klog.Infof("[%d->%d]: %s评论", param.UserId, param.VideoId, comment)
+
 		if err != nil {
 			klog.Errorf("[评论操作] 调用[用户服务] 获取评论失败 %v", err.Error())
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
-
+		comment.User = &handlers.User{
+			Id:   param.UserId,
+			Name: c.MustGet(constants.UserNameKey).(string),
+		}
 		common.SendCommentResponse(c, comment)
 		return
 	errHandler:

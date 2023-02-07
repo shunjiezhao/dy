@@ -6,12 +6,20 @@ message VideoBaseResp{
   int64 status_code = 1;
   string status_msg = 2;
 }
+message IncrCommentRequest{
+  int64 video_id  = 1;
+  bool add = 2;
+}
+message IncrCommentResponse{
+  VideoBaseResp resp = 1;
+}
 service VideoService {
   // 保存用户稿件件相关信息
   rpc Upload(PublishListRequest) returns (PublishListResponse){};
   rpc GetVideoList(GetVideoListRequest) returns(GetVideoListResponse){};
 
   rpc LikeVideo(LikeVideoRequest) returns (LikeVideoResponse){};
+  rpc IncrComment(IncrCommentRequest) returns (IncrCommentResponse){};
 }
 
 message LikeVideoAction{

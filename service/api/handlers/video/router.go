@@ -3,7 +3,7 @@ package video
 import (
 	"first/pkg/constants"
 	"first/pkg/middleware"
-	"first/service/api/handlers/storage"
+	"first/pkg/mq"
 	"first/service/api/rpc/user"
 	video2 "first/service/api/rpc/video"
 	"github.com/gin-gonic/gin"
@@ -12,20 +12,21 @@ import (
 type (
 	//Service 用户微服务代理
 	Service struct {
-		storage.Storage
-		Video video2.RpcProxyIFace
-		User  user.RpcProxyIFace
+		Video     video2.RpcProxyIFace
+		User      user.RpcProxyIFace
+		Publisher []*mq.Publisher
 	}
 )
 
-func NewVideo(factory storage.StorageFactory, face video2.RpcProxyIFace, userFace user.RpcProxyIFace) *Service {
-	if factory == nil || face == nil || userFace == nil {
+func NewVideo(face video2.RpcProxyIFace, userFace user.RpcProxyIFace,
+	Pub []*mq.Publisher) *Service {
+	if face == nil || userFace == nil {
 		return nil
 	}
 	service := Service{
-		Storage: factory.Factory(),
-		Video:   face,
-		User:    userFace,
+		Video:     face,
+		User:      userFace,
+		Publisher: Pub,
 	}
 
 	return &service
@@ -34,12 +35,15 @@ func NewVideo(factory storage.StorageFactory, face video2.RpcProxyIFace, userFac
 func InitRouter(engine *gin.Engine) {
 
 	_, jwtToken := middleware.JwtMiddle()
-	factory := storage.DefaultOssFactory{
-		Key: constants.OssSecretKey,
-		Id:  constants.OssSecretID,
-		Url: constants.OssUrl,
+
+	// 创建publisher
+	publishers := make([]*mq.Publisher, constants.VideoQCount)
+	conn := mq.GetMqConnection()
+	for i := 0; i < int(constants.VideoQCount); i++ {
+		publishers[i] = mq.NewPublisher(conn, constants.SaveVideoExName,
+			mq.GetSaveVideoQueueKey(int64(i)))
 	}
-	video := NewVideo(factory, video2.NewVideoProxy(), user.NewUserProxy())
+	video := NewVideo(video2.NewVideoProxy(), user.NewUserProxy(), publishers)
 
 	dy := engine.Group("/douyin")
 	dy.GET("/feed/", video.Feed(jwtToken)) // 获取视频流

@@ -17,6 +17,7 @@ package db
 
 import (
 	"context"
+	"first/pkg/errno"
 	"fmt"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"gorm.io/gorm"
@@ -81,8 +82,9 @@ func QueryUserByName(ctx context.Context, userName string) (*User, error) {
 // QueryUserByNamePwd query  user info by UserName
 func QueryUserByNamePwd(ctx context.Context, userName, passWord string) (*User, error) {
 	var res User
-	if err := DB.WithContext(ctx).Where("username = ? and password = ?", userName, passWord).First(&res).Error; err != nil {
-		return nil, err
+	if t := DB.WithContext(ctx).Where("username = ? and password = ?", userName,
+		passWord).First(&res).RowsAffected; t == 0 {
+		return nil, errno.RecordNotExistErr
 	}
 	return &res, nil
 }

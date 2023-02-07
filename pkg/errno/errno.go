@@ -35,6 +35,8 @@ const (
 	LikeOpErrCode              = 10011
 	OpSelfErrCode              = 10012
 	MsgSaveErrCode             = 10013
+	CompressErrCode            = 10014
+	UnCompressErrCode          = 10015
 )
 
 type ErrNo struct {
@@ -70,6 +72,8 @@ var (
 	LikeOpErr              = NewErrNo(LikeOpErrCode, "喜欢操作失败")
 	OpSelfErr              = NewErrNo(OpSelfErrCode, "不能对自己操作哦")
 	MsgSaveErr             = NewErrNo(MsgSaveErrCode, "发送消息失败")
+	CompressErr            = NewErrNo(CompressErrCode, "压缩失败")
+	UnCompressErr          = NewErrNo(UnCompressErrCode, "解压压缩失败")
 )
 
 // ConvertErr convert error to Errno

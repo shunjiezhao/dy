@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"bytes"
 	"first/pkg/constants"
 	"first/pkg/util"
 	"io"
@@ -80,19 +81,14 @@ func CreateSavePath(dst string, perm os.FileMode) error {
 }
 
 //SaveFile 保存所上传的文件，该方法主要是通过调用 os.Create 方法创建目标地址的文件，再通过 file.Open 方法打开源地址的文件，结合 io.Copy 方法实现两者之间的文件内容拷贝。
-func SaveFile(file *multipart.FileHeader, dst string) error {
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
+func SaveFile(file []byte, dst string) error {
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
+	reader := bytes.NewReader(file)
 
-	_, err = io.Copy(out, src)
+	_, err = io.Copy(out, reader)
 	return err
 }

@@ -11,9 +11,9 @@ func CreateCommentS(ctx context.Context, items []*Comment) (int64, error) {
 	return tx.RowsAffected, tx.Error
 }
 
-func CreateComment(ctx context.Context, Comment *Comment) error {
+func CreateComment(ctx context.Context, Comment *Comment) (*Comment, error) {
 	tx := DB.WithContext(ctx).Create(Comment)
-	return tx.Error
+	return Comment, tx.Error
 }
 func DeleteComment(ctx context.Context, commentId int64) error {
 	tx := DB.WithContext(ctx).Delete(&Comment{}, commentId)

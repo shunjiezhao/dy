@@ -21,7 +21,7 @@ var userClient userService.Client
 type RpcProxyIFace interface {
 	Register(ctx context.Context, param *common.RegisterRequest) (int64, error)
 	GetUserInfo(ctx context.Context, userId handlers.UserId) (*handlers.User, error)
-	CheckUser(ctx context.Context, param *common.LoginRequest) (int64, error)
+	CheckUser(ctx context.Context, param *common.LoginRequest) (*handlers.User, error)
 
 	// ActionFollow 关注/取消关注操作
 	ActionFollow(ctx context.Context, param *common.ActionRequest) error
@@ -82,7 +82,7 @@ func (proxy RpcProxy) Register(ctx context.Context, param *common.RegisterReques
 }
 
 //CheckUser rpc调用, 检查用户是否存在,如果存在返回 userid
-func (proxy RpcProxy) CheckUser(ctx context.Context, param *common.LoginRequest) (int64, error) {
+func (proxy RpcProxy) CheckUser(ctx context.Context, param *common.LoginRequest) (*handlers.User, error) {
 
 	req := &userPb.CheckUserRequest{
 		UserName: param.UserName,
@@ -90,13 +90,13 @@ func (proxy RpcProxy) CheckUser(ctx context.Context, param *common.LoginRequest)
 	}
 	resp, err := proxy.userClient.CheckUser(ctx, req)
 	if err != nil {
-		return 0, errno.RemoteErr
+		return nil, errno.RemoteErr
 	}
 	// NOTICE: 注意判断, 可能上方用 new 导致 null pointer 异常
 	if respIsErr(resp.Resp) {
-		return 0, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
-	return resp.Id, nil
+	return pack2.User(resp.User), nil
 }
 func (proxy RpcProxy) GetUserInfo(ctx context.Context, userId handlers.UserId) (*handlers.User, error) {
 	req := &userPb.GetUserRequest{Id: userId.GetUserId()}

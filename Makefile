@@ -17,5 +17,6 @@ run:
 
 .PHONY: build
 build:
-	go build ./service/api/.
-	go build ./service/user/.
+	go build  -o ./build/api ./service/api/.
+	go build -o ./build/user  ./service/user/.
+	go build -o ./build/video ./service/video/.

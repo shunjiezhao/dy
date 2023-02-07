@@ -21,16 +21,20 @@ func (proxy RpcProxy) ActionComment(ctx context.Context, param *common.CommentAc
 	}
 
 	resp, err := proxy.userClient.ActionComment(ctx, &req)
-	if err != nil || resp.Comment == nil {
+	if err != nil || (param.IsAdd() && resp.Comment == nil) {
 		klog.Errorf("[UserRpc.ActionComment]: 失败")
 		return nil, err
 	}
 
+	//TODO:发送消息 队列
 	if respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
+	if param.IsAdd() {
+		return pack2.Comment(resp.Comment), nil
+	}
 
-	return pack2.PackComment(resp.Comment), nil
+	return nil, nil
 }
 
 func (proxy RpcProxy) GetComment(ctx context.Context, param *common.CommentListRequest) (r []*handlers.Comment, err error) {
@@ -49,5 +53,5 @@ func (proxy RpcProxy) GetComment(ctx context.Context, param *common.CommentListR
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 
-	return pack2.PackComments(resp.Comment), nil
+	return pack2.Comments(resp.Comment), nil
 }

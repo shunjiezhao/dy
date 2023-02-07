@@ -21,7 +21,7 @@ message RegisterResponse{
 }
 message CheckUserResponse{
   BaseResp resp = 1;
-  int64 id = 2;
+  User user = 2;
 }
 message GetUserRequest{
   int64 id = 1;

@@ -190,7 +190,10 @@ func (s *Service) Follow() func(c *gin.Context) {
 }
 
 func getTokenUserId(c *gin.Context) int64 {
-	claim := c.MustGet(constants.IdentityKey)
+	claim, ok := c.Get(constants.IdentityKey)
+	if !ok {
+		return -1
+	}
 
 	var curUserId int64
 	tmp, ok := claim.(float64)

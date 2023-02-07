@@ -27,7 +27,8 @@ func main() {
 		panic(err)
 	}
 	Init()
-	svr := video.NewServer(new(VideoServiceImpl),
+	service := new(VideoServiceImpl)
+	svr := video.NewServer(service,
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.VideoServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                              // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),
@@ -35,6 +36,8 @@ func main() {
 		server.WithLimit(&limit.Option{MaxConnections: 10000, MaxQPS: 1000}), // limit
 		server.WithRegistry(r))
 
+	clean := service.ConsumerStart()
+	defer clean()
 	err = svr.Run()
 
 	if err != nil {

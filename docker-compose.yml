@@ -35,3 +35,21 @@ services:
       - MYSQL_USER=dy
       - MYSQL_PASSWORD=123456
       - MYSQL_RANDOM_ROOT_PASSWORD="yes"'
+  rabbitmq:
+    restart: always
+    image: rabbitmq:management
+    container_name: dy_rabbitmq
+    hostname: rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      TZ: Asia/Shanghai
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: 123456
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: dy_redis
+    ports:
+      - "6379:6379"

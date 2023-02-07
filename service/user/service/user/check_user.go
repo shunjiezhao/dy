@@ -4,6 +4,7 @@ import (
 	"context"
 	"first/kitex_gen/user"
 	"first/service/user/model/db"
+	"first/service/user/pack"
 )
 
 type CheckUserService struct {
@@ -16,12 +17,12 @@ func NewCheckUserService(ctx context.Context) *CheckUserService {
 }
 
 // CheckUser create note info
-func (s *CheckUserService) CheckUser(req *user.CheckUserRequest) (int64, error) {
+func (s *CheckUserService) CheckUser(req *user.CheckUserRequest) (*user.User, error) {
 	println("rpc 响应开始调用")
 	user, err := db.QueryUserByNamePwd(s.ctx, req.UserName, req.PassWord)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
-	return user.Uuid, err
+	return pack.User(user), err
 }

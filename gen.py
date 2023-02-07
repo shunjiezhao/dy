@@ -43,6 +43,7 @@ class GenProto:
         exist = self.existF(os.path.join(service, "main.go"))
         if exist:
             cmd += " && mv main.go handler.go %s/tmp" %(service)
+            cmd += " && rm  %s/tmp/*" % (service)
         else:
             cmd += " && mv main.go handler.go %s" % (service)
 

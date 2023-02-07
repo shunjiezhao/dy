@@ -63,7 +63,7 @@ type (
 		Id         int64  `json:"id"`
 		User       *User  `json:"user"`
 		Content    string `json:"content"`
-		CreateDate int64  `json:"create_date"`
+		CreateDate string `json:"create_date"`
 	}
 
 	Message struct {
@@ -88,7 +88,10 @@ func SendResponse(c *gin.Context, err error) {
 	c.JSON(consts.StatusOK, BuildResponse(err))
 }
 func GetTokenUserId(c *gin.Context) int64 {
-	claim := c.MustGet(constants.IdentityKey)
+	claim, ok := c.Get(constants.IdentityKey)
+	if !ok {
+		return -1
+	}
 
 	var curUserId int64
 	tmp, ok := claim.(float64)

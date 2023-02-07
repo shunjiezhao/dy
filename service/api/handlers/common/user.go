@@ -22,12 +22,13 @@ type (
 	LoginRequest struct {
 		UserName string `json:"username"  form:"username"`
 		PassWord string `json:"password" form:"password"`
+		UserId   int64  // 查询用户信息使用
 	}
 
 	LoginResponse struct {
 		handlers.Response
 		handlers.UserId
-		Token string `json:"token"`
+		handlers.Token
 	}
 	GetInfoRequest struct {
 		handlers.UserId

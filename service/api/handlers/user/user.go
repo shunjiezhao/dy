@@ -4,25 +4,24 @@ import (
 	"context"
 	"first/pkg/constants"
 	"first/pkg/errno"
+	"first/pkg/middleware"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"time"
 )
 
 // Register 注册用户
 // @tokenGenerator: 生成 token
 // @RpcRegister: 调用 rpc 返回 userid
-func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.Time, error),
-) func(context2 *gin.Context) {
+func (s *Service) Register() func(context2 *gin.Context) {
 	return func(c *gin.Context) {
 		var (
 			param  common.RegisterRequest
 			err    error
-			token  string
 			userId int64
 			ctx    context.Context = c.Request.Context() // 方便 mock gin.Context 不是 context.Context
+			data   middleware.PayLoad
 		)
 		err = c.ShouldBindQuery(&param)
 		if err != nil {
@@ -47,13 +46,18 @@ func (s *Service) Register(tokenGenerator func(data interface{}) (string, time.T
 
 		}
 
-		token, _, err = tokenGenerator(userId)
 		if err != nil {
 			handlers.SendResponse(c, err)
 			goto errHandler
 
 		}
-		common.SendRegisterResponse(c, userId, token)
+
+		data = map[string]interface{}{
+			constants.IdentityKey: userId,
+			constants.UserNameKey: param.UserName,
+		}
+		c.Set(constants.PayLodKey, data)
+		c.Set(constants.IdentityKey, userId)
 		return
 
 	errHandler:
@@ -65,8 +69,9 @@ func (s *Service) Login() func(c *gin.Context) {
 		var (
 			param common.LoginRequest
 			err   error
-			Uuid  int64
+			user  *handlers.User
 			ctx   context.Context = c.Request.Context()
+			data  middleware.PayLoad
 		)
 		notValid := func() bool {
 			return len(param.UserName) == 0 || len(param.PassWord) == 0
@@ -86,8 +91,8 @@ func (s *Service) Login() func(c *gin.Context) {
 
 		}
 
-		Uuid, err = s.rpc.CheckUser(ctx, &param)
-		if Uuid == -1 {
+		user, err = s.rpc.CheckUser(ctx, &param)
+		if user == nil {
 			handlers.SendResponse(c, errno.AuthorizationFailedErr)
 			goto errHandler
 
@@ -97,8 +102,12 @@ func (s *Service) Login() func(c *gin.Context) {
 			goto errHandler
 
 		}
-
-		c.Set(constants.IdentityKey, Uuid)
+		data = map[string]interface{}{
+			constants.IdentityKey: user.Id,
+			constants.UserNameKey: user.Name,
+		}
+		c.Set(constants.PayLodKey, data)
+		c.Set(constants.IdentityKey, user.Id)
 		return
 
 	errHandler:

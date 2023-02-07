@@ -19,8 +19,12 @@ const (
 	CommentTableName        = "comment_info"
 
 	//  jwt
-	SecretKey   = "secret key"
-	IdentityKey = "user_id"
+	SecretKey     = "secret key"
+	PayLodKey     = "jwt_payload"
+	IdentityKey   = "user_id"
+	UserNameKey   = "username"
+	FollowCount   = "follow_count"
+	FollowerCount = "follower_count"
 
 	// MYSQL DSN
 	MySQLDefaultDSN = "dy:123456@tcp(localhost:3307)/dy?charset=utf8mb4&parseTime=True&loc=Local"
