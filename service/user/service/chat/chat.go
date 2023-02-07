@@ -43,10 +43,10 @@ func (s *Service) GetFriendChatList(req *userPb.GetFriendChatRequest) ([]*userPb
 		msgS[i] = &userPb.Message{}
 		if list[i].MySend {
 			msgS[i].FromUserId = req.FromUserId
-			msgS[i].ToUserId = list[i].UUid
+			msgS[i].ToUserId = list[i].OtherId
 		} else {
 			msgS[i].ToUserId = req.FromUserId
-			msgS[i].FromUserId = list[i].UUid
+			msgS[i].FromUserId = list[i].OtherId
 		}
 		msgS[i].Content = list[i].Content
 	}

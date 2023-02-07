@@ -27,7 +27,7 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 			err       error
 			param     common.FriendListRequest //http 请求参数
 			curUserId int64                    //当前用户的 userid
-			list      []*handlers.User         // 返回的粉丝列表
+			list      []*handlers.Message      // 返回的粉丝列表
 			ctx       context.Context          = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
@@ -48,15 +48,14 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 		}
 
 		// rpc 调用
-
-		list, err = s.chatSrv.GetFriendChatList(ctx, &param)
+		list, err = s.chatSrv.GetFriendChatList(ctx, handlers.FromUserId{UserId: curUserId})
 		if err != nil {
 			klog.Errorf("[获取好友列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
 
-		common.SendUserListResponse(c, list)
+		common.GetChatListResponse(c, list)
 		return
 	errHandler:
 		c.Abort()

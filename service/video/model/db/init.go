@@ -11,7 +11,10 @@ var VideoDb *gorm.DB
 var once sync.Once
 
 // InitVideo init VideoDb
-func InitVideo() {
+func InitVideo(url string) {
+	if url == "" {
+		url = constants.MySQLDefaultDSN
+	}
 	once.Do(func() {
 		var err error
 		VideoDb, err = gorm.Open(mysql.Open(constants.MySQLDefaultDSN),

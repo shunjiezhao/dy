@@ -236,7 +236,6 @@ func getFollowsHelper(input string) []*Follow {
 
 func TestMain(t *testing.M) {
 	docker, clean := util.MysqlStartInDocker(t)
-	time.Sleep(time.Second * 14) // 等待 mysql 初始话
 	defer clean()
 	Init(docker)
 	os.Exit(t.Run())

@@ -17,7 +17,7 @@ import (
 // userClient rpc client
 var userClient userService.Client
 
-//go:generate mockgen -destination=../mock/male_mock.go -package=mock first/service/api/rpc/user RpcProxyIFace
+//go:generate mockgen -destination=../mock/user/user.go -package=mock first/service/api/rpc/user RpcProxyIFace
 type RpcProxyIFace interface {
 	Register(ctx context.Context, param *common.RegisterRequest) (int64, error)
 	GetUserInfo(ctx context.Context, userId handlers.UserId) (*handlers.User, error)

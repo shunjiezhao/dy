@@ -4,7 +4,9 @@ import (
 	"context"
 	videoPb "first/kitex_gen/video"
 	"first/pkg/constants"
+	"first/pkg/util"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,7 +34,6 @@ func insertVideoHelper(n int) []*Video {
 
 func TestFavourite(t *testing.T) {
 	//1.创建数据
-	InitVideo()
 	DB, err := VideoDb.DB()
 	if err != nil {
 		t.Fatalf("DB 初始化失败")
@@ -246,4 +247,10 @@ func LoginFeeds(dVideos []*LoginFeedResult) []*videoPb.Video {
 		res[i].IsFavorite = dVideos[i].IsFavourite
 	}
 	return res
+}
+func TestMain(t *testing.M) {
+	docker, clean := util.MysqlStartInDocker(t)
+	defer clean()
+	InitVideo(docker)
+	os.Exit(t.Run())
 }

@@ -2,12 +2,12 @@ package user
 
 import (
 	"context"
-	"first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
-	user2 "first/service/api/handlers/common/user"
-	"first/service/api/rpc/mock"
+	"first/service/api/handlers"
+	"first/service/api/handlers/common"
+	mock "first/service/api/rpc/mock/user"
 	jwt2 "github.com/appleboy/gin-jwt/v2"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gin-gonic/gin"
@@ -23,13 +23,11 @@ var (
 	testUserB  = "DouYinTestUserB"
 )
 
-// TODO: 样例过滤 SQL 注入 [非法字符]
-
 func getHandler(t *testing.T) (*gin.Engine, *gomock.Controller, *mock.MockRpcProxyIFace) {
 	engine := gin.New()
-	ctrl := gomock.NewController(t) // 需要去关闭
-	face := mock.NewMockRpcProxyIFace(ctrl)
-	service := user2.Service{rpc: face}
+	ctrl := gomock.NewController(t)         // 需要去关闭
+	face := mock.NewMockRpcProxyIFace(ctrl) // user rpc
+	service := Service{rpc: face}
 	InitRouter(engine, &service)
 
 	return engine, ctrl, face
@@ -58,9 +56,9 @@ func TestRegister(t *testing.T) {
 	assert := assert.New(t)
 
 	gomock.InOrder(
-		face.EXPECT().Register(ctx, &user.RegisterRequest{UserName: testUserA, PassWord: testUserA}).Return(int64(0),
+		face.EXPECT().Register(ctx, &common.RegisterRequest{UserName: testUserA, PassWord: testUserA}).Return(int64(0),
 			errno.ServiceErr),
-		face.EXPECT().Register(ctx, &user.RegisterRequest{UserName: testUserA, PassWord: testUserA}).Return(int64(1), nil),
+		face.EXPECT().Register(ctx, &common.RegisterRequest{UserName: testUserA, PassWord: testUserA}).Return(int64(1), nil),
 	)
 	tests := []struct {
 		name      string
@@ -127,9 +125,17 @@ func TestLogin(t *testing.T) {
 	assert := assert.New(t)
 
 	gomock.InOrder(
-		face.EXPECT().CheckUser(ctx, &user.CheckUserRequest{UserName: testUserB, PassWord: testUserB}).Return(int64(0),
+		face.EXPECT().CheckUser(ctx, &common.LoginRequest{UserName: testUserB,
+			PassWord: testUserB}).Return(nil,
 			errno.AuthorizationFailedErr),
-		face.EXPECT().CheckUser(ctx, &user.CheckUserRequest{UserName: testUserA, PassWord: testUserA}).Return(int64(1), nil),
+		face.EXPECT().CheckUser(ctx, &common.LoginRequest{UserName: testUserA,
+			PassWord: testUserA}).Return(&handlers.User{
+			Id:            1,
+			Name:          testUserA,
+			FollowCount:   0,
+			FollowerCount: 0,
+			IsFollow:      false,
+		}, nil),
 	)
 	tests := []struct {
 		name      string

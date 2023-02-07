@@ -14,6 +14,7 @@ func TestFollowUser(t *testing.T) {
 	//	4. 取消关注未关注的人
 	//	5. 取消关注已关注的人
 	e := newExpect(t, serverAddr)
+	assert := assert.New(t)
 	userIda, tokenA := getTestUserToken(testUserA, e)
 	if userIda == 0 || tokenA == "" {
 		t.Fatal("not get token and userid")
@@ -23,7 +24,7 @@ func TestFollowUser(t *testing.T) {
 		t.Fatal("not get token and userid")
 	}
 
-	route := "/douyin/relation/action"
+	route := "/douyin/relation/action/"
 	// 关注成功
 	resp := e.POST(route).WithQuery("token", tokenA).WithQuery("to_user_id", userIdb).WithQuery("action_type", 1).
 		WithFormField("token", tokenA).WithFormField("to_user_id", userIdb).WithFormField("action_type", 1).
@@ -49,7 +50,7 @@ func TestFollowUser(t *testing.T) {
 			containTestUserB = true
 		}
 	}
-	assert.True(t, containTestUserB, "Follow test user failed")
+	assert.True(containTestUserB, "Follow test user failed")
 	route = "/douyin/relation/follower/list/"
 	followerListResp := e.GET(route).
 		WithQuery("token", tokenB).WithQuery("user_id", userIdb).
@@ -68,5 +69,6 @@ func TestFollowUser(t *testing.T) {
 			containTestUserA = true
 		}
 	}
-	assert.True(t, containTestUserA, "Follower test user failed")
+	assert.True(containTestUserA, "Follower test user failed")
+	println("success")
 }

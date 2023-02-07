@@ -17,7 +17,7 @@ import (
 
 var videoClient videoservice.Client
 
-//go:generate mockgen -destination=../mock/male_mock.go -package=mock first/service/api/rpc/video RpcProxyIFace
+//go:generate mockgen -destination=../mock/video/video.go -package=mock first/service/api/rpc/video RpcProxyIFace
 type RpcProxyIFace interface {
 	Upload(ctx context.Context, param *videoPb.PublishListRequest) error
 	GetVideoList(ctx context.Context, param *common.FeedRequest) ([]*handlers.Video, error)

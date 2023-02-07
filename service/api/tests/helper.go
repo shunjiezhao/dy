@@ -27,7 +27,7 @@ func newExpect(t *testing.T, serverAddr string) *httpexpect.Expect {
 func getTestUserToken(user string, e *httpexpect.Expect) (userId int, token string) {
 	maxRetry := 2
 	for i := 0; i < maxRetry; i++ {
-		loginResp := e.GET("/douyin/user/login").WithQuery("username", user).WithQuery("password", user).
+		loginResp := e.POST("/douyin/user/login/").WithQuery("username", user).WithQuery("password", user).
 			WithFormField("username", user).WithFormField("password", user).
 			Expect().
 			Status(http.StatusOK).
@@ -37,7 +37,7 @@ func getTestUserToken(user string, e *httpexpect.Expect) (userId int, token stri
 		token = loginToken.Raw()
 		userId = int(loginResp.Value("user_id").Number().Raw())
 		if len(token) == 0 || userId == 0 {
-			registerResp := e.POST("/douyin/user/register").
+			registerResp := e.POST("/douyin/user/register/").
 				WithQuery("username", user).WithQuery("password", user).
 				WithFormField("username", user).WithFormField("password", user).
 				Expect().Status(http.StatusOK).JSON().Object()

@@ -4,5 +4,5 @@ import "first/service/video/model/db"
 
 // InitVideoDB init model
 func InitVideoDB() {
-	db.InitVideo() // mysql init
+	db.InitVideo("") // mysql init
 }

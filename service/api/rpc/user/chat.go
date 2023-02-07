@@ -33,7 +33,7 @@ func InitChatRpc() {
 		panic(err)
 	}
 }
-
+//go:generate mockgen -destination=../mock/user/chat.go -package=mock first/service/api/rpc/user ChatProxy
 type ChatProxy interface {
 	Save(context.Context, *handlers.Message) error
 	GetList(context.Context, handlers.FromUserId, handlers.ToUserId) ([]*handlers.Message, error)
@@ -45,7 +45,22 @@ type ChatRpcProxy struct {
 }
 
 func (c *ChatRpcProxy) GetFriendChatList(ctx context.Context, id handlers.FromUserId) ([]*handlers.Message, error) {
-	r, err := c.chatClient.GetChatList()
+	if id.UserId == 0 {
+		return nil, errno.ParamErr
+
+	}
+	resp, err := c.chatClient.GetFriendChatList(ctx, &user.GetFriendChatRequest{
+		FromUserId: id.GetFromUserId(),
+	})
+	if err != nil {
+		klog.Errorf("[好友列表服务]: rpc 调用失败: %v", err)
+		return nil, errno.RemoteErr
+	}
+
+	if respIsErr(resp.Resp) {
+		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
+	}
+	return PackMsgS(resp.Msg), nil
 }
 
 func (c *ChatRpcProxy) Save(ctx context.Context, message *handlers.Message) error {
