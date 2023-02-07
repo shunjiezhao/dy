@@ -33,6 +33,7 @@ func InitChatRpc() {
 		panic(err)
 	}
 }
+
 //go:generate mockgen -destination=../mock/user/chat.go -package=mock first/service/api/rpc/user ChatProxy
 type ChatProxy interface {
 	Save(context.Context, *handlers.Message) error
@@ -57,7 +58,7 @@ func (c *ChatRpcProxy) GetFriendChatList(ctx context.Context, id handlers.FromUs
 		return nil, errno.RemoteErr
 	}
 
-	if respIsErr(resp.Resp) {
+	if resp == nil || respIsErr(resp.Resp) {
 		return nil, errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return PackMsgS(resp.Msg), nil
@@ -75,7 +76,7 @@ func (c *ChatRpcProxy) Save(ctx context.Context, message *handlers.Message) erro
 		return errno.RemoteErr
 	}
 
-	if respIsErr(resp.Resp) {
+	if resp == nil || respIsErr(resp.Resp) {
 		return errno.NewErrNo(resp.Resp.StatusCode, resp.Resp.StatusMsg)
 	}
 	return nil

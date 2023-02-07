@@ -8,7 +8,6 @@ import (
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 // Register 注册用户
@@ -76,18 +75,14 @@ func (s *Service) Login() func(c *gin.Context) {
 		notValid := func() bool {
 			return len(param.UserName) == 0 || len(param.PassWord) == 0
 		}
-		err = c.ShouldBindQuery(&param)
+		err = c.ShouldBind(&param)
 		if err != nil {
-			err = c.ShouldBind(&param)
+			err = c.ShouldBindQuery(&param)
 		}
 
 		if err != nil || notValid() {
-			param.UserName = c.Query("username")
-			param.PassWord = c.Query("password")
-			if notValid() {
-				handlers.SendResponse(c, errno.ParamErr)
-				goto errHandler
-			}
+			handlers.SendResponse(c, errno.ParamErr)
+			goto errHandler
 
 		}
 
@@ -120,26 +115,16 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 		// 检查参数
 		var (
 			param    common.GetInfoRequest
-			userID   string
 			err      error
 			userInfo *handlers.User
 			ctx      context.Context = c.Request.Context()
 		)
-		userID = c.Query("user_id")
 		err = c.ShouldBindQuery(&param)
 		if err != nil || len(param.GetToken()) == 0 || param.GetUserId() == 0 {
 			err = c.ShouldBind(&param)
 		}
-		if (err != nil || param.GetUserId() <= int64(0)) && len(userID) == 0 {
+		if err != nil {
 			goto ParamErr
-		}
-
-		if len(userID) != 0 && param.GetUserId() == 0 {
-			id, err := strconv.ParseInt(userID, 10, 64)
-			if err != nil {
-				goto ParamErr
-			}
-			param.SetUserId(id)
 		}
 
 		// 发送查询请求

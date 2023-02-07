@@ -13,10 +13,6 @@ import (
 	"log"
 )
 
-//TODO:
-// 1.对于 string 类型 进行 SQL 注入检查
-// 2.参数检查
-
 type ChatServiceImpl struct{}
 
 func (c *ChatServiceImpl) GetFriendChatList(ctx context.Context, req *user.GetFriendChatRequest) (resp *user.GetFriendChatResponse, err error) {
@@ -32,6 +28,7 @@ func (c *ChatServiceImpl) GetFriendChatList(ctx context.Context, req *user.GetFr
 		resp.Resp = pack.BuildBaseResp(errno.ServiceErr)
 		return
 	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
 
 	return
 }
@@ -85,7 +82,7 @@ func isAdd(i int32) bool {
 	return false
 }
 func (s *UserServiceImpl) ActionComment(ctx context.Context, req *user.ActionCommentRequest) (resp *user.
-ActionCommentResponse, err error) {
+	ActionCommentResponse, err error) {
 	resp = new(user.ActionCommentResponse)
 	if req == nil {
 		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
@@ -102,6 +99,7 @@ ActionCommentResponse, err error) {
 		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
 		return resp, nil
 	}
+	klog.Infof("操作成功 %+v", req)
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 
 	return
@@ -130,15 +128,20 @@ func (s *UserServiceImpl) GetUsers(ctx context.Context, req *user.GetUserSReques
 		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
 		return
 	}
+	klog.Infof("获取用户信息")
+
 	if req.Uuid == 0 {
 		resp.User, err = user2.NewGetUserService(ctx).GetUserS(req)
 	} else {
 		resp.User, err = user2.NewGetUserService(ctx).GetUserSWithLogin(req) // 登陆用户获取朋友列表, 关注字段
 	}
+
 	if err != nil {
-		resp.Resp = pack.BuildBaseResp(errno.UserAlreadyExistErr)
+		klog.Infof("获取用户信息失败%v", err)
+		resp.Resp = pack.BuildBaseResp(errno.RemoteErr)
 		return resp, nil
 	}
+	klog.Infof("操作成功")
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
 }
@@ -273,6 +276,19 @@ func (s *UserServiceImpl) UnFollow(ctx context.Context, req *user.FollowRequest)
 }
 
 // GetFriendList 返回好友列表
-func (s *UserServiceImpl) GetFriendList(ctx context.Context, req *user.FollowRequest) (resp *user.GetFriendResponse, err error) {
+func (s *UserServiceImpl) GetFriendList(ctx context.Context, req *user.GetFriendRequest) (resp *user.GetFriendResponse, err error) {
+	resp = new(user.GetFriendResponse)
+	if req == nil {
+		resp.Resp = pack.BuildBaseResp(errno.ParamErr)
+		return
+
+	}
+	resp.UserList, err = follow.NewGetFriendListService(ctx).GetFriendLList(req)
+	if err != nil {
+		klog.Errorf("[获取好友消息记录] :获取出错 %v", err)
+		resp.Resp = pack.BuildBaseResp(errno.ServiceErr)
+		return
+	}
+	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return
 }

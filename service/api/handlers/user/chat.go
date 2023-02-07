@@ -8,7 +8,6 @@ import (
 	"first/service/api/handlers/common"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
-	"log"
 	"time"
 )
 
@@ -79,8 +78,8 @@ func (s *Service) GetChatList() func(c *gin.Context) {
 			err = c.ShouldBind(&param)
 		}
 
-		if err != nil {
-			klog.Errorf("[获取消息]: 绑定参数失败 %v", err.Error())
+		if err != nil || param.GetToUserId() == 0 {
+			klog.Errorf("[获取消息]: 绑定参数失败 %v", err)
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
@@ -101,9 +100,7 @@ func (s *Service) GetChatList() func(c *gin.Context) {
 
 		}
 		klog.Infof("[获取消息]: [%d->%d]聊天 信息", curUserId, param.GetToUserId())
-		//TODO: LOG
-		log.Printf("%+v", msgs[0])
-		log.Printf("%#v", msgs[0])
+		klog.Infof("%+v", msgs)
 
 		common.GetChatListResponse(c, msgs)
 		return

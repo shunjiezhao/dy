@@ -42,10 +42,13 @@ func (s *Service) Feed(validate gin.HandlerFunc) func(c *gin.Context) {
 		if param.LatestTime > time.Now().Unix() {
 			param.LatestTime /= 1000
 		}
+		if param.LatestTime == 0 {
+			param.LatestTime = time.Now().Unix()
+		}
 
 		list, err = s.GetVideosAndUsers(c, &param, false)
 		if err != nil {
-			handlers.SendResponse(c, errno.ServiceErr)
+			handlers.SendResponse(c, errno.RemoteErr)
 			goto ErrHandler
 
 		}
@@ -85,10 +88,9 @@ func (s *Service) GetVideosAndUsers(c *gin.Context, param *common.FeedRequest, i
 	users, err := s.User.GetUsers(c, &common.GetUserSRequest{Id: id, CurUserId: param.Uuid})
 	if err != nil {
 		klog.Errorf("[Video]: 获取视频用户信息失败: %v", err.Error())
-		return nil, err
 
 	}
-	klog.Infof("获取成功users: %v", users)
+	klog.Infof("获取成功users: %#v", users)
 
 	return Videos(list, users, isOne), nil
 }
@@ -98,6 +100,9 @@ func Videos(videos []*handlers.Video, users []*handlers.User, isOne bool) []*han
 		idx map[int64]int
 	)
 	if isOne {
+		if len(users) < 1 {
+			users = append(users, &handlers.User{})
+		}
 		one = users[0]
 	} else {
 		idx = make(map[int64]int, len(users))

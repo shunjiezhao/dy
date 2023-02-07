@@ -4,10 +4,14 @@ import (
 	"first/kitex_gen/user"
 	"first/pkg/constants"
 	"first/service/api/handlers"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"time"
 )
 
 func User(u *user.User) *handlers.User {
+	if u == nil {
+		return nil
+	}
 	return &handlers.User{
 		Id:            u.Id,
 		Name:          u.UserName,
@@ -41,10 +45,37 @@ func Comments(com []*user.Comment) []*handlers.Comment {
 }
 
 func Comment(c *user.Comment) *handlers.Comment {
+	if c == nil {
+		return nil
+	}
 	return &handlers.Comment{
 		Id:         c.Id,
 		User:       User(c.User),
 		Content:    c.Content,
 		CreateDate: time.Unix(c.CreateDate, 0).Format(constants.TimeFormatS),
+	}
+}
+func FriendUsers(u []*user.FriendUser) []*handlers.FriendUser {
+	users := make([]*handlers.FriendUser, len(u))
+	if len(u) == 0 {
+		return users
+	}
+
+	for i := 0; i < len(u); i++ {
+		users[i] = FriendUser(u[i])
+		klog.Infof("[pack.FriendList]: result: %v", users[i])
+
+	}
+	return users
+}
+
+func FriendUser(friendUser *user.FriendUser) *handlers.FriendUser {
+	if friendUser == nil {
+		return nil
+	}
+	return &handlers.FriendUser{
+		User:    User(friendUser.User),
+		Message: friendUser.Message,
+		MsgType: friendUser.MsgType,
 	}
 }

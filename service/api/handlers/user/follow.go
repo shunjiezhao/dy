@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var shouldGetOther = false
+var shouldGetOther = true
 
 // 返回是否有权限得到其他人的关注信息
 func getOther(userId, otherId int64) bool {
@@ -27,7 +27,7 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 			err       error
 			param     common.FriendListRequest //http 请求参数
 			curUserId int64                    //当前用户的 userid
-			list      []*handlers.Message      // 返回的粉丝列表
+			list      []*handlers.FriendUser   // 返回的粉丝列表
 			ctx       context.Context          = c.Request.Context()
 		)
 		curUserId = getTokenUserId(c)
@@ -48,14 +48,18 @@ func (s *Service) GetFriendList() func(c *gin.Context) {
 		}
 
 		// rpc 调用
-		list, err = s.chatSrv.GetFriendChatList(ctx, handlers.FromUserId{UserId: curUserId})
+		list, err = s.rpc.GetFriendList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[获取好友列表]: 调用 rpc 失败%v", err)
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
+		for i := 0; i < len(list); i++ {
 
-		common.GetChatListResponse(c, list)
+			klog.Infof("获得消息记录 %+v", list[i])
+		}
+
+		common.GetFriendListResponse(c, list)
 		return
 	errHandler:
 		c.Abort()
@@ -89,7 +93,6 @@ func (s *Service) GetFollowerList() func(c *gin.Context) {
 		klog.Infof("[粉丝列表]: 获取 参数 %+v", param)
 
 		// rpc 调用
-
 		list, err = s.rpc.GetFollowerList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[粉丝列表]: 调用 rpc 失败%v", err)

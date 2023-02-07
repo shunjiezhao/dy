@@ -112,7 +112,7 @@ type (
 	}
 	CommentActionResponse struct {
 		handlers.Response
-		*handlers.Comment
+		*handlers.Comment `json:"comment"`
 	}
 	CommentListRequest struct {
 		VideoId int64 `json:"video_id" form:"video_id"`
@@ -166,12 +166,7 @@ type (
 
 	FriendListResponse struct {
 		handlers.Response
-		UserList []*FriendUser // 用户列表
-	}
-
-	FriendUser struct {
-		Message string `json:"message"`
-		MsgType int64  `json:"msg_type"`
+		UserList []*handlers.FriendUser `json:"user_list"` // 用户列表
 	}
 )
 
@@ -207,7 +202,7 @@ func GetChatListResponse(c *gin.Context, msg []*handlers.Message) {
 		MessageList: msg,
 	})
 }
-func GetFriendListResponse(c *gin.Context, msg []*FriendUser) {
+func GetFriendListResponse(c *gin.Context, msg []*handlers.FriendUser) {
 	c.JSON(consts.StatusOK, FriendListResponse{
 		Response: handlers.BuildResponse(errno.Success),
 		UserList: msg,

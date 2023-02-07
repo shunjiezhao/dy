@@ -50,7 +50,9 @@ message FollowRequest{
 message FollowResponse{
   BaseResp resp = 1;
 }
-
+message  GetFriendRequest{
+  int64 from_user_id = 1;
+}
 message GetFriendResponse{
   BaseResp resp = 1;
   repeated FriendUser user_list = 2;
@@ -69,7 +71,7 @@ service UserService{
   //  取消关注某个用户
   rpc UnFollow(FollowRequest) returns(FollowResponse){};
   // 获取好友列表, 并且获取当前好友的消息
-  rpc GetFriendList(FollowRequest) returns(GetFriendResponse){};
+  rpc GetFriendList(GetFriendRequest) returns(GetFriendResponse){};
 
   // 批量获取用户
   rpc GetUsers(GetUserSRequest)returns(UserListResponse){};
@@ -160,7 +162,7 @@ message GetFriendChatRequest{
 }
 message GetFriendChatResponse{
   BaseResp resp = 1;
-  repeated Message msg= 2;
+  repeated Message msg = 2;
 }
 
 

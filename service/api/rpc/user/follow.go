@@ -16,7 +16,7 @@ func (proxy RpcProxy) GetFollowList(ctx context.Context, param *common.GetUserFo
 		Id: param.GetUserId(),
 	}
 	resp, err := proxy.userClient.GetFollowList(ctx, req)
-	if err != nil || resp.User == nil {
+	if err != nil {
 		klog.Errorf("[UserRpc.GetFollowList]: 失败 :%v", err)
 		return nil, errno.RemoteErr
 	}
@@ -32,7 +32,7 @@ func (proxy RpcProxy) GetFollowerList(ctx context.Context, param *common.GetUser
 	}
 
 	resp, err := proxy.userClient.GetFollowerList(ctx, req)
-	if err != nil || resp.User == nil {
+	if err != nil {
 		klog.Errorf("[UserRpc.GetFollowerList]: 失败 :%v", err)
 		return nil, errno.RemoteErr
 	}
@@ -69,4 +69,21 @@ func (proxy RpcProxy) ActionFollow(ctx context.Context, param *common.ActionRequ
 	}
 	return nil
 
+}
+func (proxy RpcProxy) GetFriendList(ctx context.Context, param *common.FriendListRequest) ([]*handlers.FriendUser, error) {
+	var (
+		resp *userPb.GetFriendResponse
+		err  error
+	)
+
+	req := &userPb.GetFriendRequest{
+		FromUserId: param.GetUserId(),
+	}
+	resp, err = proxy.userClient.GetFriendList(ctx, req)
+	if err != nil {
+		klog.Errorf("[UserRpc.GetFriendList]: 失败 :%v", err)
+		return nil, err
+	}
+	klog.Infof("[UserRpc.GetFriendList]: result: %v", resp.UserList)
+	return pack2.FriendUsers(resp.UserList), nil
 }

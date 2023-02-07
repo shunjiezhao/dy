@@ -28,11 +28,13 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 		if err != nil || param.VideoId == 0 || param.GetToken() == "" {
 			err = c.ShouldBind(&param)
 		}
-		if err != nil {
+		if err != nil || param.VideoId == 0 || len(param.GetToken()) == 0 {
 			klog.Errorf("[获取评论] 绑定参数失败 %v", err.Error())
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
+
+		klog.Errorf("[获取评论] 参数 %+v", param)
 
 		// rpc 调用
 
@@ -62,14 +64,15 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 
 		// token 检验成功 开始 绑定参数
 		err = c.ShouldBindQuery(&param)
-		if err != nil || param.VideoId == 0 || param.GetToken() == "" {
+		if err != nil {
 			err = c.ShouldBind(&param)
 		}
-		if err != nil {
+		if err != nil || len(param.GetToken()) == 0 {
 			klog.Errorf("[评论操作]: 绑定参数失败 %v", err.Error())
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
+
 		param.UserId = getTokenUserId(c)
 
 		if param.CommentActionType.IsAdd() {

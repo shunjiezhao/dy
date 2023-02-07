@@ -73,6 +73,11 @@ type (
 		Content    string `json:"content"`     // 消息内容
 		CreateTime string `json:"create_time"` // 消息创建时间
 	}
+	FriendUser struct {
+		*User   `json:"user"`
+		Message string `json:"message"`
+		MsgType int64  `json:"msg_type"`
+	}
 )
 
 func BuildResponse(err error) Response {

@@ -27,6 +27,7 @@ type RpcProxyIFace interface {
 	ActionFollow(ctx context.Context, param *common.ActionRequest) error
 	GetFollowerList(ctx context.Context, param *common.GetUserFollowerListRequest) ([]*handlers.User, error)
 	GetFollowList(ctx context.Context, param *common.GetUserFollowListRequest) ([]*handlers.User, error)
+	GetFriendList(ctx context.Context, param *common.FriendListRequest) ([]*handlers.FriendUser, error)
 
 	GetUsers(ctx context.Context, Req *common.GetUserSRequest) ([]*handlers.User, error)
 
@@ -121,7 +122,7 @@ func (proxy RpcProxy) GetUsers(ctx context.Context, param *common.GetUserSReques
 	}
 
 	resp, err := proxy.userClient.GetUsers(ctx, req)
-	if err != nil || resp.User == nil {
+	if err != nil {
 		return nil, errno.RemoteErr
 	}
 
