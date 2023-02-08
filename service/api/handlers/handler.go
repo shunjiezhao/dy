@@ -4,7 +4,9 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
+	"github.com/u2takey/go-utils/json"
 )
 
 type (
@@ -79,6 +81,15 @@ type (
 		MsgType int64  `json:"msg_type"`
 	}
 )
+
+func (u *User) MarshalBinary() (data []byte, err error) {
+	data, err = json.Marshal(u)
+	if err != nil {
+		klog.Errorf("json 失败: %v", err)
+		return nil, err
+	}
+	return
+}
 
 func BuildResponse(err error) Response {
 	Err := errno.ConvertErr(err)

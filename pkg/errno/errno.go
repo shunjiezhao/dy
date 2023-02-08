@@ -37,6 +37,7 @@ const (
 	MsgSaveErrCode             = 10013
 	CompressErrCode            = 10014
 	UnCompressErrCode          = 10015
+	RedisKeyNotExistErrCode    = 10016
 )
 
 type ErrNo struct {
@@ -74,6 +75,7 @@ var (
 	MsgSaveErr             = NewErrNo(MsgSaveErrCode, "发送消息失败")
 	CompressErr            = NewErrNo(CompressErrCode, "压缩失败")
 	UnCompressErr          = NewErrNo(UnCompressErrCode, "解压压缩失败")
+	RedisKeyNotExistErr    = NewErrNo(RedisKeyNotExistErrCode, "Redis Key 不存在")
 )
 
 // ConvertErr convert error to Errno

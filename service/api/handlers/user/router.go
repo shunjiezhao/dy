@@ -4,15 +4,18 @@ import (
 	"first/pkg/constants"
 	"first/pkg/middleware"
 	"first/pkg/mq"
+	redis2 "first/pkg/redis"
 	user2 "first/service/api/rpc/user"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 //Service 用户微服务代理
 type Service struct {
 	rpc       user2.RpcProxyIFace
 	chatSrv   user2.ChatProxy
-	Publisher map[string][]*mq.Publisher
+	publisher map[string][]*mq.Publisher
+	redis     *redis.Client
 }
 
 func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
@@ -22,10 +25,12 @@ func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
 	if charSrv == nil {
 		charSrv = user2.NewChatRpcProxy()
 	}
+
 	return &Service{
 		rpc:       rpc,
 		chatSrv:   charSrv,
-		Publisher: createPublisher(),
+		publisher: createPublisher(),
+		redis:     redis2.InitRedis(),
 	}
 }
 func createPublisher() map[string][]*mq.Publisher {

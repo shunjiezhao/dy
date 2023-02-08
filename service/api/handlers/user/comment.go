@@ -87,13 +87,13 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 
 		}
 
-		err = s.Publisher[constants.UActionCommentKey][mq.UGetActionCommentIdx(param.VideoId)].Publish(ctx, data)
+		err = s.publisher[constants.UActionCommentKey][mq.UGetActionCommentIdx(param.VideoId)].Publish(ctx, data)
 		if err != nil {
 			klog.Infof("[评论操作]发送失败")
 			handlers.SendResponse(c, errno.ParamErr)
 			goto errHandler
 		}
-		err = s.Publisher[constants.VActionVideoComCountKey][mq.VGetActionVideoComCountIdx(param.VideoId)].Publish(ctx, data)
+		err = s.publisher[constants.VActionVideoComCountKey][mq.VGetActionVideoComCountIdx(param.VideoId)].Publish(ctx, data)
 		if err != nil {
 			klog.Infof("[评论操作]发送失败")
 			handlers.SendResponse(c, errno.ParamErr)

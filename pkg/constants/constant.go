@@ -38,6 +38,9 @@ const (
 	UploadSavePath     = "./static"
 	UploadImageMaxSize = 10
 	UploadServerUrl    = ApiServerAddress
+
+	// Redis
+	RedisDefaultURL = "127.0.0.1:6379"
 )
 
 var (

@@ -112,6 +112,7 @@ func (s *Service) Login() func(c *gin.Context) {
 
 func (s *Service) GetInfo() func(c *gin.Context) {
 	return func(c *gin.Context) {
+
 		// 检查参数
 		var (
 			param    common.GetInfoRequest
@@ -127,6 +128,7 @@ func (s *Service) GetInfo() func(c *gin.Context) {
 			goto ParamErr
 		}
 
+		// 如果发现 1s 内的请求一样那么就
 		// 发送查询请求
 		userInfo, err = s.rpc.GetUserInfo(ctx, param.UserId)
 		if err != nil {
