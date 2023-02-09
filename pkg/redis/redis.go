@@ -5,22 +5,15 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type Redis struct {
-	redis *redis.Client
-}
+var client *redis.Client
 
-//InitRedis 初始Redis 连接
-func InitRedis() *redis.Client {
-	client := redis.NewClient(&redis.Options{
+//init 初始Redis 连接
+func init() {
+	client = redis.NewClient(&redis.Options{
 		Addr: constants.RedisDefaultURL,
 	})
+}
+
+func GetRedis() *redis.Client {
 	return client
-}
-
-func NewReids() *Redis {
-	return &Redis{redis: InitRedis()}
-}
-
-func IsRedisError(err error) bool {
-	return err == redis.Nil
 }
