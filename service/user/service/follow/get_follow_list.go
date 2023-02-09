@@ -12,12 +12,12 @@ type GetFollowUserListService struct {
 	ctx context.Context
 }
 
-// NewGetFollowUserListService new CreateNoteService
+// NewGetFollowUserListService new NewGetFollowUserListService
 func NewGetFollowUserListService(ctx context.Context) *GetFollowUserListService {
 	return &GetFollowUserListService{ctx: ctx}
 }
 
-// GetFollowUserList create note info
+// GetFollowUserList 返回关注列表
 func (s *GetFollowUserListService) GetFollowUserList(req *user.GetFollowListRequest) ([]*user.User, error) {
 	log.Println("FollowUserList: rpc 响应开始调用")
 	list, err := db.GetFollowUserList(s.ctx, req.Id)

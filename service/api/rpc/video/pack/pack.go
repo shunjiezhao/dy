@@ -3,6 +3,7 @@ package pack
 import (
 	"first/kitex_gen/video"
 	"first/service/api/handlers"
+	pack2 "first/service/api/rpc/user/pack"
 )
 
 func Videos(videos []*video.Video) []*handlers.Video {
@@ -16,7 +17,7 @@ func Videos(videos []*video.Video) []*handlers.Video {
 			FavoriteCount: videos[i].FavoriteCount,
 			CommentCount:  videos[i].CommentCount,
 			IsFavorite:    videos[i].IsFavorite,
-			Author:        &handlers.User{Id: videos[i].Author},
+			Author:        pack2.User(videos[i].Author),
 		}
 
 	}

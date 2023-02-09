@@ -10,12 +10,10 @@ import (
 )
 
 const (
-	UserName     = "username"
-	FollowCnt    = "followCount"
-	FollowerCnt  = "followerCount"
-	PublishCnt   = "publishCnt"
-	LikeVideoCnt = "publishCnt"
-	ExpireTime   = time.Minute
+	UserName    = "username"
+	FollowCnt   = "followCount"
+	FollowerCnt = "followerCount"
+	ExpireTime  = time.Minute
 )
 
 // getVideoInfoLua
@@ -43,11 +41,11 @@ func GetUserInfo(r *redis.Client, ctx context.Context, me int64, userIds []int64
 		args[i] = userIds[i]
 	}
 	result, err := r.Eval(ctx, getUserInfoLua, []string{
-		0: UserInfoPrefix,
+		0: InfoPrefix,
 		1: UserName,
 		2: FollowCnt,
 		3: FollowerCnt,
-		4: UserFollowerSetPrefix,
+		4: FollowerSetPrefix,
 		5: strconv.FormatInt(me, 10),
 	}, args...).Result()
 	if err != nil {

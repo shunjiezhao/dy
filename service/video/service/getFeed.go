@@ -33,7 +33,7 @@ func (s *FeedsService) FeedsItem(req *video.GetVideoListRequest) ([]*video.Video
 	return pack.Videos(videos), nil
 }
 
-// GetUserPublish create note info
+// GetUserPublish
 func (s *FeedsService) GetUserPublish(req *video.GetVideoListRequest) ([]*video.Video, error) {
 	videos, err := db.GetUserPublish(db.VideoDb, s.ctx, req.Author)
 	if err != nil {

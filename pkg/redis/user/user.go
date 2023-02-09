@@ -9,12 +9,12 @@ import (
 
 const (
 	// 用户的基本信息前缀
-	UserInfoPrefix         = "user."
-	UserNamePrefix         = UserInfoPrefix + "name."          // string userid
-	UserFollowSetPrefix    = UserInfoPrefix + "follow."        // set  userid
-	UserFollowerSetPrefix  = UserInfoPrefix + "follower."      // set userid
-	UserLikeVideoPrefix    = UserInfoPrefix + "like.video."    // zset 根据 排序 需要删除
-	UserPublishVideoPrefix = UserInfoPrefix + "publish.video." // list
+	InfoPrefix         = "user."
+	NamePrefix         = InfoPrefix + "name."          // string userid
+	FollowSetPrefix    = InfoPrefix + "follow."        // set  userid
+	FollowerSetPrefix  = InfoPrefix + "follower."      // set userid
+	LikeVideoPrefix    = InfoPrefix + "like.video."    // zset 根据 排序 需要删除
+	PublishVideoPrefix = InfoPrefix + "publish.video." // list
 )
 
 type UserKeyType int
@@ -56,20 +56,20 @@ func GetKey(keyType UserKeyType, id int64) string {
 // 获取用户的Key
 
 func userInfoKey(id int64) string {
-	return UserInfoPrefix + intToString(id)
+	return InfoPrefix + intToString(id)
 }
 func UserFollowSetKey(id int64) string {
-	return UserFollowSetPrefix + intToString(id)
+	return FollowSetPrefix + intToString(id)
 }
 func userFollowerSetKey(id int64) string {
-	return UserFollowerSetPrefix + intToString(id)
+	return FollowerSetPrefix + intToString(id)
 }
 
 func userLikeVideoKey(id int64) string {
-	return UserLikeVideoPrefix + intToString(id)
+	return LikeVideoPrefix + intToString(id)
 }
 func userPublishVideoKey(id int64) string {
-	return UserPublishVideoPrefix + intToString(id)
+	return PublishVideoPrefix + intToString(id)
 }
 func intToString(i int64) string {
 	return strconv.FormatInt(i, 10)

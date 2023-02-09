@@ -5,6 +5,8 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/mq"
+	"first/pkg/redis"
+	"first/pkg/redis/video"
 	"first/pkg/util"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
@@ -19,7 +21,7 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 		var (
 			err      error
 			param    common.CommentListRequest //http 请求参数
-			ctx      context.Context           = c.Request.Context()
+			ctx      = c.Request.Context()
 			comments []*handlers.Comment
 		)
 
@@ -37,6 +39,10 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 		klog.Errorf("[获取评论] 参数 %+v", param)
 
 		// rpc 调用
+		comments, err = video.GetCommentList(redis.GetRedis(), ctx, param.VideoId, 10)
+		if err == nil {
+			goto redisHit
+		}
 
 		comments, err = s.rpc.GetComment(ctx, &param)
 		if err != nil {
@@ -44,7 +50,14 @@ func (s *Service) GetCommentList() func(c *gin.Context) {
 			handlers.SendResponse(c, errno.RemoteErr)
 			goto errHandler
 		}
-
+		// 第一次读入, 需要写入 Redis
+		for i := 0; i < 2; i++ { // 重试两次
+			err = video.WriteCommentList(redis.GetRedis(), ctx, param.VideoId, comments)
+			if err == nil {
+				break
+			}
+		}
+	redisHit:
 		common.SendCommentListResponse(c, comments)
 		return
 	errHandler:
@@ -78,7 +91,6 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 		if param.CommentActionType.IsAdd() {
 			param.CommentId = util.NextVal()
 		}
-		// 发送消息队列
 		data, err = param2Info(&param)
 		if err != nil {
 			klog.Errorf("[评论操作] json 化失败 %v", err.Error())
@@ -87,13 +99,8 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 
 		}
 
+		// 发送 评论操作 -> MQ
 		err = s.publisher[constants.UActionCommentKey][mq.UGetActionCommentIdx(param.VideoId)].Publish(ctx, data)
-		if err != nil {
-			klog.Infof("[评论操作]发送失败")
-			handlers.SendResponse(c, errno.ParamErr)
-			goto errHandler
-		}
-		err = s.publisher[constants.VActionVideoComCountKey][mq.VGetActionVideoComCountIdx(param.VideoId)].Publish(ctx, data)
 		if err != nil {
 			klog.Infof("[评论操作]发送失败")
 			handlers.SendResponse(c, errno.ParamErr)
@@ -115,11 +122,44 @@ func (s *Service) ActionComment() func(c *gin.Context) {
 			Id:   param.UserId,
 			Name: c.MustGet(constants.UserNameKey).(string),
 		}
+
+		if err := s.redisUpdateCommentList(err, ctx, &param, comment); err != nil {
+			handlers.SendResponse(c, err)
+			goto errHandler
+
+		}
+
 		common.SendCommentResponse(c, comment)
 		return
 	errHandler:
 		c.Abort()
 	}
+}
+
+func (s *Service) redisUpdateCommentList(err error, ctx context.Context, param *common.CommentActionRequest,
+	comment *handlers.Comment) error {
+	// 更新redis
+	err = video.WriteCommentList(redis.GetRedis(), ctx, param.VideoId, []*handlers.Comment{comment})
+	if err != nil {
+		// 补偿
+		//删除消息
+		param.CommentActionType = 3 - param.CommentActionType // 也就是 1->2 2->1 差集
+		data, err := param2Info(param)
+		for i := 0; i < 2; i++ { // 重试两次
+			err = s.publisher[constants.UActionCommentKey][mq.UGetActionCommentIdx(param.VideoId)].Publish(ctx, data)
+			if err == nil {
+				break
+			}
+
+		}
+
+		if err != nil {
+			klog.Errorf("json化失败 %v", err)
+		}
+
+		return errno.RemoteErr
+	}
+	return nil //更新成功
 }
 func param2Info(param *common.CommentActionRequest) ([]byte, error) {
 	info := mq.ActionCommentInfo{

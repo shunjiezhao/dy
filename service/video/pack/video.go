@@ -2,6 +2,7 @@ package pack
 
 import (
 	"errors"
+	userPb "first/kitex_gen/user"
 	videoPb "first/kitex_gen/video"
 	"first/pkg/errno"
 	"first/service/video/model/db"
@@ -45,7 +46,7 @@ func Videos(dVideos []*db.Video) []*videoPb.Video {
 func video(dVideo *db.Video) *videoPb.Video {
 	return &videoPb.Video{
 		Id:            dVideo.Id,
-		Author:        dVideo.AuthorUuid,
+		Author:        &userPb.User{Id: dVideo.AuthorUuid},
 		PlayUrl:       dVideo.PlayUrl,
 		CoverUrl:      dVideo.CoverUrl,
 		FavoriteCount: dVideo.FavoriteCount,

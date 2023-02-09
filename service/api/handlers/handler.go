@@ -82,6 +82,15 @@ type (
 	}
 )
 
+func (u *Comment) MarshalBinary() (data []byte, err error) {
+	data, err = json.Marshal(u)
+	if err != nil {
+		klog.Errorf("json 失败: %v", err)
+		return nil, err
+	}
+	return
+}
+
 func (u *User) MarshalBinary() (data []byte, err error) {
 	data, err = json.Marshal(u)
 	if err != nil {

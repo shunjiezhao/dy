@@ -4,7 +4,6 @@ import (
 	"first/pkg/constants"
 	"first/pkg/middleware"
 	"first/pkg/mq"
-	redis2 "first/pkg/redis"
 	user2 "first/service/api/rpc/user"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -30,7 +29,6 @@ func New(rpc user2.RpcProxyIFace, charSrv user2.ChatProxy) *Service {
 		rpc:       rpc,
 		chatSrv:   charSrv,
 		publisher: createPublisher(),
-		redis:     redis2.InitRedis(),
 	}
 }
 func createPublisher() map[string][]*mq.Publisher {

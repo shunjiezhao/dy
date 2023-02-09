@@ -2,12 +2,14 @@ syntax = "proto3";
 option go_package = "video;video";
 
 
+import "user.proto";
+
 message VideoBaseResp{
   int64 status_code = 1;
   string status_msg = 2;
 }
 message IncrCommentRequest{
-  int64 video_id  = 1;
+  int64 video_id = 1;
   bool add = 2;
 }
 message IncrCommentResponse{
@@ -66,7 +68,7 @@ message GetVideoListResponse{
 
 message Video {
   int64 id = 1; // 视频唯一标识
-  int64 author = 2; // 视频作者信息
+  User author = 2; // 视频作者信息
   string play_url = 3; // 视频播放地址
   string cover_url = 4; // 视频封面地址
   int64 favorite_count = 5; // 视频的点赞总数

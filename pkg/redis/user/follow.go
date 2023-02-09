@@ -40,9 +40,9 @@ return ans
 func followHelper(r *redis.Client, ctx context.Context, ty UserKeyType, id int64) (users []*userPb.User,
 	err error) {
 	eval := r.Eval(ctx, followUserListlua, []string{
-		0: UserNamePrefix,
-		1: UserFollowSetPrefix,
-		2: UserFollowerSetPrefix,
+		0: NamePrefix,
+		1: FollowSetPrefix,
+		2: FollowerSetPrefix,
 		3: strconv.FormatInt(id, 10),
 		4: GetKey(ty, id),
 	})

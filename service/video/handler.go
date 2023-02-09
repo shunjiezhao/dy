@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	userPb "first/kitex_gen/user"
+	user "first/kitex_gen/user/userservice"
 	video "first/kitex_gen/video"
 	"first/pkg/constants"
 	"first/pkg/errno"
@@ -19,7 +21,9 @@ import (
 )
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
-type VideoServiceImpl struct{}
+type VideoServiceImpl struct {
+	userRpc user.Client
+}
 
 func (s *VideoServiceImpl) IncrComment(ctx context.Context, req *video.IncrCommentRequest) (resp *video.IncrCommentResponse, err error) {
 	resp = new(video.IncrCommentResponse)
@@ -90,6 +94,11 @@ func (s *VideoServiceImpl) Upload(ctx context.Context, req *video.PublishListReq
 // GetVideoList implements the VideoServiceImpl interface.
 func (s *VideoServiceImpl) GetVideoList(ctx context.Context, req *video.GetVideoListRequest) (resp *video.
 	GetVideoListResponse, err error) {
+	var (
+		ids        []int64
+		user2Video = map[int64]*video.Video{}
+		users      *userPb.UserListResponse
+	)
 	resp = new(video.GetVideoListResponse)
 	if req == nil {
 		goto ParamErr
@@ -114,10 +123,26 @@ func (s *VideoServiceImpl) GetVideoList(ctx context.Context, req *video.GetVideo
 	}
 
 	klog.Infof("get video list :%#v", resp.VideoList)
-	if err != nil {
+	if err != nil || len(resp.VideoList) == 0 {
 		resp.Resp = pack.BuildBaseResp(errno.GetVideoErr)
 		return resp, nil
 	}
+	ids = make([]int64, 0, len(resp.VideoList))
+	for i := 0; i < len(resp.VideoList); i++ {
+		uId := resp.VideoList[i].Author.Id
+		ids = append(ids, uId)
+		user2Video[uId] = resp.VideoList[i]
+	}
+	users, err = s.userRpc.GetUsers(ctx, &userPb.GetUserSRequest{Id: ids})
+	if err != nil {
+		klog.Errorf("获取视频用户失败 %v", err)
+		resp.Resp = pack.BuildBaseResp(errno.GetVideoErr)
+		return resp, nil
+	}
+	for i := 0; i < len(users.User); i++ {
+		user2Video[users.User[i].Id].Author = users.User[i]
+	}
+
 	resp.Resp = pack.BuildBaseResp(errno.Success)
 	return resp, nil
 

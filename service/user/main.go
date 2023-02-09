@@ -5,6 +5,7 @@ import (
 	user "first/kitex_gen/user/userservice"
 	"first/pkg/constants"
 	"first/pkg/middleware"
+	"first/service/user/handler"
 	"first/service/user/model"
 	"github.com/cloudwego/kitex/pkg/limit"
 	"github.com/cloudwego/kitex/pkg/registry"
@@ -19,13 +20,12 @@ import (
 func Init() {
 	model.InitUserDB()
 }
-func Run(r registry.Registry, group sync.WaitGroup) {
-	defer group.Done()
+func Run(r registry.Registry) {
 	addr, err := net.ResolveTCPAddr("tcp", "")
 	if err != nil {
 		panic(err)
 	}
-	impl := &UserServiceImpl{}
+	impl := &handler.UserServiceImpl{}
 
 	svr := user.NewServer(impl,
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.UserServiceName}), // server name
@@ -49,15 +49,18 @@ func main() {
 	}
 	Init()
 	group := sync.WaitGroup{}
-	group.Add(2)
-	go Run(r, group) // user service
+	group.Add(1)
+	go func() {
+		defer group.Done()
+		Run(r) // user service
+	}()
 
 	// chat service
 	addr, err := net.ResolveTCPAddr("tcp", "")
 	if err != nil {
 		panic(err)
 	}
-	svr := chatservice.NewServer(&ChatServiceImpl{},
+	svr := chatservice.NewServer(&handler.ChatServiceImpl{},
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.ChatServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                             // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),
