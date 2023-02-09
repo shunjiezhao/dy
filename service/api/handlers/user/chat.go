@@ -39,14 +39,12 @@ func (s *Service) SendMsg() func(c *gin.Context) {
 
 		}
 
-		//TODO: msg id
 		klog.Infof("[%d->%d]: %s", curUserId, param.GetToUserId(), param.Content)
 		msg.ToUserId = param.ToUserId
 		msg.FromUserId = handlers.FromUserId{UserId: curUserId}
 		msg.Content = param.Content
 		msg.CreateTime = time.Now().Format(constants.TimeFormatS)
 
-		//TODO: 优化 考虑如果消息发送失败
 		err = s.chatSrv.Save(ctx, &msg)
 		if err != nil {
 			klog.Errorf("[保存消息]: 失败 %v", err.Error())

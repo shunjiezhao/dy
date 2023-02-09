@@ -12,80 +12,80 @@ resources ：
     application.yaml ：数据配置文件，例如mysql配置，redis配置
 ## 项目目录
 ```
-├── go.sum
-├── idl
-│   └── user.proto
-├── kitex_gen  --kitex生成的rpc 接口文件
-├── pkg        
-│   ├── configs  -- 一些配置
-│   ├── constants -- 常量
-│   ├── errno -- 错误码
-│   └── middleware  -- 中间件
-│       └──  jwt.go -- jwt 鉴权
-└── service 
-    ├── api
+├── build    
+├── idl     -- 接口定义文件 
+├── pkg     -- 工具包 
+│   ├── configs
+│   │   └── sql -- 建表
+│   ├── constants -- 常量 配置相关
+│   ├── errno  -- 错误码
+│   ├── middleware -- gin 中间件
+│   ├── mq -- 消息队列
+│   ├── redis -- 缓存
+│   │   ├── user 
+│   │   └── video
+│   ├── storage -- 上传接口实现
+│   ├── upload
+│   └── util -- 工具
+└── service
+    ├── api -- gin 对外暴露的接口层
     │   ├── handlers
+    │   │   ├── common 
+    │   │   ├── user -- 请求
+    │   │   └── video
+    │   ├── router
+    │   └── rpc  -- 调用 rpc
+    │       ├── mock
+    │       │   └── user
+    │       ├── pack
+    │       ├── user
+    │       │   └── pack
+    │       └── video
+    │           └── pack
+    ├── user -- 用户微服务
+    │   ├── handler 
+    │   ├── model -- 数据库
+    │   │   └── db
+    │   ├── pack
+    │   ├── service 
+    │   │   ├── chat
+    │   │   ├── comment
+    │   │   ├── follow
     │   │   └── user
-    │   ├── router                -- 调用各个用于初始化router的函数
-    │   ├── rpc                   -- http 用到的 rpc 服务
-    │   │   ├── mock
-    │   │   └── user              -- 用户rpc服务
-    │   └── tests                 --测试整条链路的调用
-    └── user -- 用户微服务
-        ├── main.go
-        ├── handler.go      -- rpc 服务 调用 service 层提供的服务
-        ├── model           -- dao 层
+    │   └── tmp
+    └── video -- 视频服务
+        ├── model -- 数据库
         │   └── db
-        ├── pack            -- 将 dao 层对象打包
-        ├── script
-        └── service         -- service 层
- 
+        ├── pack 
+        ├── service
+        └── tmp
 
 ```
+
+## TODO
+打算将自己的储存项目整合进来, 两个项目结合起来.
+
+## 总体架构
+![img.png](imgs/img4.png)
+
+
+
+## 表结构设计
+其中 `id` 都是通过 雪花算法 生成.
+![img.png](imgs/img3.png)
+
 
 # 下面的优化
 
 自己的一些看法, 欢迎指正+批评`=-=`
 
-## Redis 优化
+## Redis 
 
-### 用户信息
-
-1. 好友列表 `set` 交集
-   1. 关注 加入
-   2. 取关 移除
-2. 基本信息 `map` 登陆就缓存 过期时间设置为`token` 的过期时间 `key:id`
-   1. 名字
-   2. 粉丝数量
-   3. 关注数量
-   4. 作品数量
-   5. 喜欢作品数量
-3. 发布列表  `list` 高产的人....估计很少(除过营销号, 但是看的人也少)
-   1. 弹出数量, 从而根据userId, 获取用户的信息, 比如 用户基本信息的 名字, 然后需要判断自己是否关注他
-4. 喜欢视频列表 `list` 更新频繁, 加入.如果去对方主页的话, 需要强制刷新一回, 保证是最新的.
-
-5. 用户主页
-   1. 基本信息 -> 1,2,3
-   2. 自己的作品
-   3. 喜欢的作品
-
-### 视频信息
-
-1. 视频列表 `list` 存储 `video_id`
-   1. 如果是普通用户, 直接找当前的视频流返回,
-   2. 如果是登陆用户, 登陆的时候已经将视频列表保存, 那么我们需要和当前视频列表中的用户信息做比较, 看我们是否关注.
-
-视频上传是异步的, 如果视频服务上传视频成功, 将视频的基本信息传递进去, 但是需要注意, 这个视频信息只包含作者的用户id.
-
-2. 视频信息
-   1. 点赞用户id
-   2. 评论列表
-   3. 用户id
+![img.png](imgs/img.png)
 
 
-
-
-
+## MQ
+![img.png](imgs/img2.png)
 
 
 

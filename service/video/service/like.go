@@ -75,7 +75,7 @@ func (s *LikeService) UnLikeVideo(req *video.LikeVideoRequest) error {
 func (s *LikeService) LikesItem(req *video.GetVideoListRequest) ([]*video.Video, error) {
 	// Redis 命中
 	list, err := video2.GetFavVideoList(redis.GetRedis(), s.ctx, req.Uuid)
-	if err != nil {
+	if err == nil {
 		return list, err
 	}
 	videos, err := db.GetFavVideoAfterTime(s.ctx, req.Uuid, time.Now().Unix(), 20)

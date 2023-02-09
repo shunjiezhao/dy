@@ -15,9 +15,10 @@ import (
 	"first/service/video/pack"
 	"first/service/video/service"
 	"fmt"
+	"time"
+
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/u2takey/go-utils/json"
-	"time"
 )
 
 // VideoServiceImpl implements the last service interface defined in the IDL.
@@ -245,6 +246,11 @@ func (s *VideoServiceImpl) ConsumerStart() func() {
 					0).Format(constants.TimeFormatS))
 
 				playUrl, coverUrl := upload.UploadFile(&info)
+				if playUrl == "" {
+					// 上传失败
+					klog.Errorf("上传失败, 检查 oss 服务是否正常工作")
+					continue
+				}
 				for i := 0; i < 2; i++ {
 					_, err = s.Upload(context.Background(), &video.PublishListRequest{
 						Author:   info.Uuid,

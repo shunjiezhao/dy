@@ -136,7 +136,6 @@ func (s *Service) GetFollowList() func(c *gin.Context) {
 		klog.Infof("[关注列表]: 获取 参数 %+v", param)
 
 		// rpc
-
 		list, err = s.rpc.GetFollowList(ctx, &param)
 		if err != nil {
 			klog.Errorf("[关注列表]: 调用 rpc 失败%v", err)

@@ -48,6 +48,7 @@ func (s *Service) Feed(validate gin.HandlerFunc) func(c *gin.Context) {
 
 		list, err = s.GetVideosAndUsers(c, &param, false)
 		if err != nil {
+			klog.Errorf("rpc 获取视频列表失败 %v", err)
 			handlers.SendResponse(c, errno.RemoteErr)
 			goto ErrHandler
 
