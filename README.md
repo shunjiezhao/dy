@@ -5,11 +5,6 @@
 项目整体结构参照 `easy_note` 结构来构建
 
 
-resources ：
-
-    image : 图片资源png、jpg
-    video ： 视频资源mp4
-    application.yaml ：数据配置文件，例如mysql配置，redis配置
 ## 项目目录
 ```
 ├── build    
