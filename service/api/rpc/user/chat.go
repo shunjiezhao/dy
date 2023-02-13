@@ -7,9 +7,11 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	"first/pkg/util"
 	"first/service/api/handlers"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	etcd "github.com/kitex-contrib/registry-etcd"
 	"time"
 )
@@ -23,11 +25,17 @@ func InitChatRpc() {
 		panic(err)
 	}
 
+	clientName := "api-client"
+	suite, _ := util.Trace(clientName)
+
 	chatClient, err = chatservice.NewClient(
 		constants.ChatServiceName,
 		client.WithMiddleware(middleware.CommonMiddleware),
 		client.WithInstanceMW(middleware.ClientMiddleware),
 		client.WithResolver(resolver), // etcd
+		client.WithSuite(suite),
+		// Please keep the same as provider.WithServiceName
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: clientName}),
 	)
 	if err != nil {
 		panic(err)

@@ -40,7 +40,7 @@ type (
 	}
 
 	GetUserSRequest struct {
-		Id        []int64 `json:"id,omitempty" form:"id"`
+		Id        []int64 `json:"id,omitempty" form:"id" binding:"required"`
 		CurUserId int64
 	}
 )

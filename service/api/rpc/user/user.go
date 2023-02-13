@@ -7,10 +7,12 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	"first/pkg/util"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	pack2 "first/service/api/rpc/user/pack"
 	"github.com/cloudwego/kitex/client"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	etcd "github.com/kitex-contrib/registry-etcd"
 )
 
@@ -44,17 +46,24 @@ func NewUserProxy() RpcProxyIFace {
 }
 
 func InitApiUserRpc() {
+
 	var err error
 	resolver, err := etcd.NewEtcdResolver([]string{constants.EtcdAddress})
 	if err != nil {
 		panic(err)
 	}
 
+	clientName := "api-client"
+	trace, _ := util.Trace(clientName)
+
 	userClient, err = userService.NewClient(
 		constants.UserServiceName,
 		client.WithMiddleware(middleware.CommonMiddleware),
 		client.WithInstanceMW(middleware.ClientMiddleware),
 		client.WithResolver(resolver), // etcd
+		client.WithSuite(trace),
+		// Please keep the same as provider.WithServiceName
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: clientName}),
 	)
 	if err != nil {
 		panic(err)

@@ -7,11 +7,13 @@ import (
 	"first/pkg/constants"
 	"first/pkg/errno"
 	"first/pkg/middleware"
+	"first/pkg/util"
 	"first/service/api/handlers"
 	"first/service/api/handlers/common"
 	"first/service/api/rpc/video/pack"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	etcd "github.com/kitex-contrib/registry-etcd"
 )
 
@@ -104,11 +106,17 @@ func InitApiVideoRpc() {
 		panic(err)
 	}
 
+	clientName := "api-client"
+	suite, _ := util.Trace(clientName)
+
 	videoClient, err = videoservice.NewClient(
 		constants.VideoServiceName,
 		client.WithMiddleware(middleware.CommonMiddleware),
 		client.WithInstanceMW(middleware.ClientMiddleware),
 		client.WithResolver(resolver), // etcd
+		client.WithSuite(suite),
+		// Please keep the same as provider.WithServiceName
+		client.WithClientBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: clientName}),
 	)
 
 	if err != nil {

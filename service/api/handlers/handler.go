@@ -15,13 +15,13 @@ type (
 		StatusMsg  string `json:"status_msg,omitempty"`
 	}
 	Token struct {
-		Token string `json:"token" form:"token"`
+		Token string `json:"token" form:"token" binding:"required"`
 	}
 	UserId struct {
-		UserId int64 `json:"user_id" form:"user_id"`
+		UserId int64 `json:"user_id" form:"user_id" binding:"required"`
 	}
 	ToUserId struct {
-		UserId int64 `json:"to_user_id" form:"to_user_id"`
+		UserId int64 `json:"to_user_id" form:"to_user_id" binding:"number"`
 	}
 	FromUserId struct {
 		UserId int64 `json:"from_user_id" form:"from_user_id"`

@@ -5,6 +5,7 @@ import (
 	user "first/kitex_gen/user/userservice"
 	"first/pkg/constants"
 	"first/pkg/middleware"
+	"first/pkg/util"
 	"first/service/user/handler"
 	"first/service/user/model"
 	"github.com/cloudwego/kitex/pkg/limit"
@@ -60,11 +61,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	trace, _ := util.SrvTrace(constants.ChatServiceName + "-service")
+
 	svr := chatservice.NewServer(&handler.ChatServiceImpl{},
 		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{ServiceName: constants.ChatServiceName}), // server name
 		server.WithMiddleware(middleware.CommonMiddleware),                                             // middleWare
 		server.WithMiddleware(middleware.ServerMiddleware),
-		server.WithServiceAddr(addr),                                         // address
+		server.WithServiceAddr(addr), // address
+		server.WithSuite(trace),
 		server.WithLimit(&limit.Option{MaxConnections: 10000, MaxQPS: 1000}), // limit
 		server.WithRegistry(r))
 
