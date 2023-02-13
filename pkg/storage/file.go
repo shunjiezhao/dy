@@ -17,7 +17,7 @@ type defaultFileStorage struct {
 	UploadServerUrl string
 }
 
-func (svc defaultFileStorage) UploadFile(info *Info) (string, string) {
+func (svc defaultFileStorage) UploadFile(info *Info) (string, string, error) {
 	title := info.Title
 	fileName := upload.GetFileName(title)
 	ext := upload.GetFileExt(fileName)
@@ -26,12 +26,12 @@ func (svc defaultFileStorage) UploadFile(info *Info) (string, string) {
 	if upload.CheckSavePath(uploadSavePath) {
 		err := upload.CreateSavePath(uploadSavePath, os.ModePerm)
 		if err != nil {
-			return "", ""
+			return "", "", nil
 		}
 	}
 
 	if upload.CheckPermission(uploadSavePath) {
-		return "", ""
+		return "", "", nil
 
 	}
 
@@ -39,9 +39,9 @@ func (svc defaultFileStorage) UploadFile(info *Info) (string, string) {
 
 	err := upload.SaveFile(info.Data, dst)
 	if err != nil {
-		return "", ""
+		return "", "", nil
 
 	}
 	//accessUrl := constants.UploadServerUrl + "/" + dst
-	return "", ""
+	return "", "", nil
 }

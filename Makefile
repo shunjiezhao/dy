@@ -9,6 +9,7 @@ idl: $(idlFile)
 
 .ONESHELL:
 run:
+	./run.sh
 	go install github.com/golang/mock/mockgen@v1.6.0
 	docker compose up
 	go run ./service/api/main.go

@@ -20,10 +20,11 @@ type (
 		Time  int64  `json:"time,omitempty"`
 		Uuid  int64  `json:"uuid"`
 		Title string `json:"title"`
+		Hash  string `json:"hash"`
 	}
 
 	Storage interface {
-		UploadFile(*Info) (string, string) // 返回我们的 获取链接
+		UploadFile(*Info) (string, string, error) // 返回我们的 获取链接
 	}
 
 	StorageFactory interface {

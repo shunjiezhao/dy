@@ -1,16 +1,19 @@
 package util
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"github.com/klauspost/compress/zstd"
+	"io"
 )
 
-func EncodeMD5(value string) string {
-	m := md5.New()
-	m.Write([]byte(value))
-
-	return hex.EncodeToString(m.Sum(nil))
+func EncodeMD5(r io.Reader) string {
+	h := sha256.New()
+	readAll, _ := io.ReadAll(r)
+	h.Write(readAll)
+	// 注意需要先将byte转换为16进制表示
+	return base64.StdEncoding.EncodeToString([]byte(hex.EncodeToString(h.Sum(nil))))
 }
 
 func Compress(src []byte) ([]byte, error) {
@@ -18,6 +21,7 @@ func Compress(src []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return enc.EncodeAll(src, make([]byte, 0, len(src))), nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"errors"
 	userPb "first/kitex_gen/user"
 	user "first/kitex_gen/user/userservice"
 	video "first/kitex_gen/video"
@@ -152,13 +153,15 @@ ParamErr:
 	return resp, nil
 }
 
+//UpdateVideoInfoConStart 增加视频评论数量
 func (s *VideoServiceImpl) UpdateVideoInfoConStart() func() {
+	// 创建 mq 消费者
 	cons := mq.NewSubConsumer(constants.VActionVideoComCountQCount, constants.VActionVideoComCountExName,
 		mq.VGetActionVideoComQueueName, mq.VGetActionVideoComCountQueueKey, "")
+
 	done := make(chan struct{})
-	fmt.Println(len(cons))
 	for i := 0; i < len(cons); i++ {
-		go func(i int, con *mq.Consumer) {
+		go func(i int, con *mq.Consumer) { // 启动消费者
 			consumer, err := con.Consumer()
 			if err != nil {
 				klog.Errorf("%d 号 消息队列挂掉, %v", i, err)
@@ -169,15 +172,14 @@ func (s *VideoServiceImpl) UpdateVideoInfoConStart() func() {
 				var info mq.ActionCommentInfo
 				err = json.Unmarshal(data.Body, &info)
 				if err != nil {
-					klog.Infof("%d 好 unmarshal 失败 %v", i, err)
+					klog.Infof("%d  unmarshal 失败 %v", i, err)
 					return
 				}
 
 				klog.Infof("%d 号 消息队列获取到参数:%#v", i, info)
-
-				for i := 0; i < 2; i++ {
+				for i := 0; i < 2; i++ { // 失败重试两次
 					_, err = s.IncrComment(context.Background(), &video.IncrCommentRequest{
-						VideoId: info.VideoId, //TODO:
+						VideoId: info.VideoId,
 						Add:     info.ActionType == 1,
 					})
 					if err != nil {
@@ -197,6 +199,60 @@ func (s *VideoServiceImpl) UpdateVideoInfoConStart() func() {
 
 }
 
+func (s *VideoServiceImpl) handlerVideo(data []byte, id int, store storage.Storage) error {
+	Body, err := util.DeCompress(data)
+	if err != nil {
+		klog.Errorf("%d 号 消息解压失败:%v", id, err)
+		return errno.MsgSaveErr
+
+	}
+	buf := bytes.NewReader(Body)
+	if err != nil {
+		klog.Errorf("%d 号 消息接受失败:%v", id, err)
+		return errno.MsgSaveErr
+	}
+
+	decoder := gob.NewDecoder(buf)
+	if err != nil {
+		klog.Errorf("%d 号 消息队列处理失败:%v", id, err)
+		return errno.MsgSaveErr
+
+	}
+	var info storage.Info
+	err = decoder.Decode(&info)
+	if err != nil {
+		return errno.MsgSaveErr
+
+	}
+	klog.Infof("%d 号 消息队列获取到参数:%s %d %d", id, info.Title, info.Uuid, time.Unix(info.Time, 0).Format(constants.TimeFormatS))
+
+	playUrl, coverUrl, err := store.UploadFile(&info)
+	if err != nil {
+		if errors.As(err, &errno.VideoBrokeErr) {
+			klog.Errorf("文件损坏")
+			return err // 无能为力了
+		}
+		if errors.As(err, &errno.RemoteOssErr) {
+			klog.Errorf("上传失败, 检查 oss 服务是否正常工作")
+			return err // 无能为力了
+		}
+		return err
+	}
+	for i := 0; i < 2; i++ {
+		_, err = s.Upload(context.Background(), &video.PublishListRequest{
+			Author:   info.Uuid,
+			PlayUrl:  playUrl,
+			CoverUrl: coverUrl,
+			Title:    info.Title,
+		})
+		if err == nil {
+			break
+		}
+		klog.Errorf("%d 号 消息队列处理失败: DB保存失败%v", i, err)
+	}
+	return nil
+}
+
 //ConsumerStart 开启消费者 监听 Save.Video. 消息队列
 func (s *VideoServiceImpl) ConsumerStart() func() {
 	cons := mq.NewSubConsumer(constants.VideoQCount, constants.SaveVideoExName, mq.GetSaveVideoQueueName, mq.GetSaveVideoQueueKey, "")
@@ -205,7 +261,20 @@ func (s *VideoServiceImpl) ConsumerStart() func() {
 		Id:  constants.OssSecretID,
 		Url: constants.OssUrl,
 	}
+
 	upload := factory.Factory()
+	delayPublisher := mq.NewDelayProducer(mq.Config{
+		Addr:       constants.MQConnURL,
+		Exchange:   "delay-save-video",
+		Queue:      "test-queue",
+		RoutingKey: "delayVideo",
+		AutoDelete: false,
+	})
+	err := delayPublisher.Connect()
+	if err != nil {
+		panic(err)
+	}
+	go s.delayQueueStart(upload) // 延迟消费
 
 	done := make(chan struct{})
 	fmt.Println(len(cons))
@@ -218,51 +287,9 @@ func (s *VideoServiceImpl) ConsumerStart() func() {
 			}
 			klog.Infof("%d 号 消息队列启动", i)
 			for data := range consumer {
-				data.Body, err = util.DeCompress(data.Body)
-				if err != nil {
-					klog.Errorf("%d 号 消息解压失败:%v", i, err)
-					return
-				}
-				buf := bytes.NewReader(data.Body)
-
-				if err != nil {
-					klog.Errorf("%d 号 消息接受失败:%v", i, err)
-					continue
-				}
-
-				decoder := gob.NewDecoder(buf)
-				if err != nil {
-					//TODO:继续发送
-					klog.Errorf("%d 号 消息队列处理失败:%v", i, err)
-					continue
-
-				}
-				var info storage.Info
-				err = decoder.Decode(&info)
-				if err != nil {
-					return
-				}
-				klog.Infof("%d 号 消息队列获取到参数:%s %d %d", i, info.Title, info.Uuid, time.Unix(info.Time,
-					0).Format(constants.TimeFormatS))
-
-				playUrl, coverUrl := upload.UploadFile(&info)
-				if playUrl == "" {
-					// 上传失败
-					klog.Errorf("上传失败, 检查 oss 服务是否正常工作")
-					continue
-				}
-				for i := 0; i < 2; i++ {
-					_, err = s.Upload(context.Background(), &video.PublishListRequest{
-						Author:   info.Uuid,
-						PlayUrl:  playUrl,
-						CoverUrl: coverUrl,
-						Title:    info.Title,
-					})
-					if err != nil {
-						klog.Errorf("%d 号 消息队列处理失败: DB保存失败%v", i, err)
-						continue
-					}
-					break
+				err := s.handlerVideo(data.Body, i, upload)
+				if err != nil && !errors.As(err, errno.VideoBrokeErr) {
+					delayPublisher.Publish(data.Body, 60000) // 进入延时队列时间为 单位是ms
 				}
 			}
 
@@ -271,6 +298,19 @@ func (s *VideoServiceImpl) ConsumerStart() func() {
 	cleanUp := func() {
 		done <- struct{}{}
 	}
-
 	return cleanUp
+}
+
+func (s *VideoServiceImpl) delayQueueStart(store storage.Storage) {
+	mq.NewDelayConsumer(mq.Config{
+		Addr:       constants.MQConnURL,
+		Exchange:   "delay-save-video",
+		Queue:      "delay-save-video",
+		RoutingKey: "delayVideo",
+		AutoDelete: false,
+	}, func(i []byte) error {
+		klog.Infof("开始处理")
+		s.handlerVideo(i, 0, store)
+		return nil
+	}, "delay-video-0").Start()
 }

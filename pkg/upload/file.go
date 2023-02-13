@@ -25,7 +25,11 @@ func GetFileName(name string) string {
 	ext := GetFileExt(name)
 	// end with ext ?
 	fileName := strings.TrimSuffix(name, ext)
-	fileName = util.EncodeMD5(fileName)
+	file, err := os.Open(name)
+	if err != nil {
+		return ""
+	}
+	fileName = util.EncodeMD5(file)
 
 	return fileName + ext
 }

@@ -32,11 +32,13 @@ func (s *Service) Publish() func(c *gin.Context) {
 			fileHeader *multipart.FileHeader
 			//fileInfo   storage.AccessUrl
 			file     multipart.File
-			data     []byte
 			uuid     int64
 			saveInfo *storage.Info
 			ctx      = c.Request.Context()
-			byte2    bytes.Buffer
+			data     []byte
+			hBytes   bytes.Buffer // 用来存储文件的数据
+			eBytes   bytes.Buffer // 用来存储二进制压缩的数据
+			hash     string
 			encoder  *gob.Encoder
 		)
 		// 1. 检查文件大小
@@ -69,18 +71,18 @@ func (s *Service) Publish() func(c *gin.Context) {
 			return
 		}
 
-		data, err = io.ReadAll(file)
-		if err != nil {
-			return
-		}
-
+		// read file 就会 write -> hBytes
+		// 对于 file 的文件值进行hash
+		hash = util.EncodeMD5(io.TeeReader(file, &hBytes))
 		saveInfo = &storage.Info{
-			Data:  data,
+			Data:  hBytes.Bytes(),
 			Time:  time.Now().Unix(),
 			Uuid:  handlers.GetTokenUserId(c),
 			Title: param.Title,
+			Hash:  hash, // hash
 		}
-		encoder = gob.NewEncoder(&byte2)
+		klog.Infof("save info: len:%d  hash: %s", len(saveInfo.Data), saveInfo.Hash)
+		encoder = gob.NewEncoder(&eBytes)
 		err = encoder.Encode(saveInfo)
 
 		if err != nil {
@@ -88,7 +90,8 @@ func (s *Service) Publish() func(c *gin.Context) {
 			handlers.SendResponse(c, err)
 			goto errHandler
 		}
-		data, err = util.Compress(byte2.Bytes())
+
+		data, err = util.Compress(eBytes.Bytes())
 		if err != nil {
 			klog.Error("加密失败")
 			handlers.SendResponse(c, err)
@@ -103,7 +106,7 @@ func (s *Service) Publish() func(c *gin.Context) {
 
 		}
 
-		//klog.Info("[发布视频]: 	成功")
+		klog.Info("[发布视频]: 	成功")
 		handlers.SendResponse(c, errno.Success)
 		return
 

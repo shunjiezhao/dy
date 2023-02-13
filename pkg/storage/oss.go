@@ -3,10 +3,10 @@ package storage
 import (
 	"bytes"
 	"context"
+	"first/pkg/errno"
+	"first/pkg/util"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -42,26 +42,27 @@ type defaultOssStorage struct {
 }
 
 //UploadFile 默认 5s 上传文件失败
-func (svc defaultOssStorage) UploadFile(info *Info) (string, string) {
+func (svc defaultOssStorage) UploadFile(info *Info) (string, string, error) {
 
 	key := strconv.Itoa(int(info.Uuid)) + time.Now().Format(time.Kitchen) + ".mp4" // 拼接 filename
 	ctx, cancelFunc := context.WithTimeout(context.Background(), svc.maxUploadTime*time.Second)
 	defer cancelFunc()
 	reader := bytes.NewReader(info.Data)
-	ioutil.WriteFile("./save.mp4", info.Data, fs.ModePerm)
+	// hash 检查
+	hash := util.EncodeMD5(reader)
+	if hash != info.Hash {
+		klog.Errorf("hash 不想等;want: %s; but %s;", info.Hash, hash)
+		return "", "", errno.VideoBrokeErr
+	}
+
 	_, err := svc.client.Object.Put(ctx, key, reader, nil)
 
 	if err != nil {
 		klog.Errorf("上传文件失败", err.Error())
-		//TODO:继续放入消息队列中
-		return "", ""
+		return "", "", errno.RemoteOssErr
 	}
 
 	playUrl := svc.url + "/" + key
-	if err != nil {
-		klog.Errorf("上传文件失败", err.Error())
-		return "", ""
-	}
 
-	return playUrl, playUrl + "?ci-process=snapshot&time=0&format=jpg"
+	return playUrl, playUrl + "?ci-process=snapshot&time=0&format=jpg", nil
 }
